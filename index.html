@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Enjoy a free AI-powered multiplayer snake game with skins and chat. Play online with friends now!">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Snake Game Online Free - Play Now!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #1a1a2e;
+            color: #e94560;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            margin: 0 auto;
+            border: 8px solid #e94560;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            background-color: #16213e;
+            display: block;
+        }
+        
+        .snake-head {
+            background-color: #e94560;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #e94560;
+        }
+        
+        .snake-body {
+            background-color: #0f3460;
+            border-radius: 30%;
+        }
+        
+        .food {
+            background-color: #f9b208;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .ad-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #e94560;
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ad-close {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        
+        .player-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: 5px;
+            font-size: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 5px solid #e94560;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        .power-up {
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .shop-item {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .shop-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
+        }
+        
+        .owned-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #38b000;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .chat-message {
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            color: #a0a0a0;
+            font-size: 0.8em;
+        }
+        
+        .typing-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .typing-dot {
+            width: 5px;
+            height: 5px;
+            background-color: #a0a0a0;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.5s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingAnimation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* 新增：带滚动条的玩家列表 */
+        .player-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #e94560 #16213e;
+        }
+        
+        .player-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .player-list-container::-webkit-scrollbar-track {
+            background: #16213e;
+        }
+        
+        .player-list-container::-webkit-scrollbar-thumb {
+            background-color: #e94560;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <i class="fas fa-gamepad text-2xl text-red-500 mr-2"></i>
+            <h1 class="text-xl font-bold">Multiplayer Snake Game</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+                <i class="fas fa-coins text-yellow-400 mr-1"></i>
+                <span id="coins">0</span>
+            </div>
+            <button id="shop-btn" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded">
+                <i class="fas fa-shopping-cart mr-1"></i>Shop
+            </button>
+            <button id="leaderboard-btn" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded">
+                <i class="fas fa-trophy mr-1"></i>Leaderboard
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8 flex flex-col lg:flex-row">
+        <!-- 游戏区域 -->
+        <div class="lg:w-3/4 lg:pr-4 mb-8 lg:mb-0">
+            <div class="game-container mx-auto">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+            </div>
+            
+            <!-- 游戏控制 -->
+            <div class="mt-4 flex justify-center space-x-4">
+                <button id="start-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-play mr-2"></i>Start Game
+                </button>
+                <button id="pause-btn" class="bg-yellow-600 hover:bg-yellow-700 text白色 px-6 py-2 rounded-lg" disabled>
+                    <i class="fas fa-pause mr-2"></i>Pause
+                </button>
+                <button id="multiplayer-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-users mr-2"></i>Multiplayer
+                </button>
+            </div>
+            
+            
+            
+            <!-- 游戏状态 -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Current Score</h3>
+                    <p id="score" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">	High Score</h3>
+                    <p id="high-score" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Online Players
+                    </h3>
+                    <p id="player-count" class="text-2xl font-bold">1</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Current Speed</h3>
+                    <p id="speed" class="text-2xl font-bold">150</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 侧边栏 -->
+        <div class="lg:w-1/4">
+            <!-- 广告位1 -->
+            <div class="ad-container mb-6">
+                <button class="ad-close">&times;</button>
+                <h3 class="text-center mb-2 text-sm">Sponsored Ad</h3>
+                <div class="flex justify-center">
+                    <img src="https://via.placeholder.com/250x100?text=游戏广告位" alt="广告" class="rounded">
+                </div>
+                <p class="text-xs mt-2 text-center">Click the ad to support us</p>
+            </div>
+            
+            <!-- 玩家列表 -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-sm text-gray-400 mb-3">Player List</h3>
+                <div id="player-list" class="player-list-container space-y-2">
+                    <div class="flex items-center">
+                        <span class="player-tag bg-red-500">You</span>
+                        <span>玩家1</span>
+                        <span class="ml-auto text-xs">>0 pts</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天室 -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-sm text-gray-400 mb-3">Game Chatroom</h3>
+                <div id="chat-messages" class="h-40 overflow-y-auto mb-3 text-xs space-y-2">
+                    <div class="chat-message text-green-400">System: Welcome to Multiplayer Snake Game!</div>
+                </div>
+                <!-- 正在输入指示器 -->
+                <div id="typing-indicator" class="typing-indicator hidden">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="ml-2">Other players are typing...</span>
+                </div>
+                <div class="flex">
+                    <input type="text" id="chat-input" class="flex-grow bg-gray-700 text-white px-2 py-1 rounded-l text-xs" placeholder="输入消息...">
+                    <button id="chat-send" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-r text-xs">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 广告位2 -->
+            <div class="ad-container">
+                <button class="ad-close">&times;</button>
+                <h3 class="text-center mb-2 text-sm">Recommended Game</h3>
+                <div class="flex justify-center">
+                    <img src="https://via.placeholder.com/250x150?text=推荐游戏广告" alt="广告" class="rounded">
+                </div>
+                <p class="text-xs mt-2 text-center">Click to learn more</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 商店模态框 -->
+    <div id="shop-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl mb-6"><i class="fas fa-shopping-cart mr-2"></i>游戏商店</h2>
+            <div class="flex justify-between mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                    <span id="shop-coins" class="font-bold">0</span> 金币
+                </div>
+                <button id="refresh-shop" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">
+                    <i class="fas fa-sync-alt mr-1"></i>刷新商品
+                </button>
+            </div>
+            
+            <!-- 皮肤类别 -->
+            <h3 class="text-left mb-3 border-b border-gray-700 pb-2"><i class="fas fa-paint-brush mr-2"></i>蛇皮肤</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg relative shop-item">
+                    <h3 class="text-sm mb-2">经典红色</h3>
+                    <div class="w-full h-20 bg-red-600 mb-2 rounded"></div>
+                    <p class="text-xs mb-2">经典默认皮肤</p>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="skin-classic" data-price="0" data-owned="true">
+                        已拥有
+                    </button>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg relative shop-item">
+                    <h3 class="text-sm mb-2">火焰</h3>
+                    <div class="w-full h-20 bg-gradient-to-r from-red-500 to-yellow-500 mb-2 rounded"></div>
+                    <p class="text-xs mb-2">让你的蛇看起来像火焰一样酷炫!</p>
+                    <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="skin-fire" data-price="500">
+                        <i class="fas fa-coins mr-1"></i>500金币
+                    </button>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg relative shop-item">
+                    <h3 class="text-sm mb-2">彩虹</h3>
+                    <div class="w-full h-20 bg-gradient-to-r from-red-500 via-yellow-500 to-purple-500 mb-2 rounded"></div>
+                    <p class="text-xs mb-2">彩虹色的蛇，让其他玩家羡慕!</p>
+                    <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="skin-rainbow" data-price="800">
+                        <i class="fas fa-coins mr-1"></i>800金币
+                    </button>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg relative shop-item">
+                    <h3 class="text-sm mb-2">幽灵</h3>
+                    <div class="w-full h-20 bg-gradient-to-r from-gray-300 to-gray-500 mb-2 rounded"></div>
+                    <p class="text-xs mb-2">半透明效果，让对手难以看清你的蛇!</p>
+                    <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="skin-ghost" data-price="1000">
+                        <i class="fas fa-coins mr-1"></i>1000金币
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 道具类别 -->
+            <h3 class="text-left mb-3 border-b border-gray-700 pb-2"><i class="fas fa-magic mr-2"></i>游戏道具</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg shop-item">
+                    <h3 class="text-sm mb-2">加速道具</h3>
+                    <div class="w-full h-20 bg-blue-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-bolt text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">游戏开始时获得10秒加速效果</p>
+                    <div class="flex items-center">
+                        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="powerup-speed" data-price="300">
+                            <i class="fas fa-coins mr-1"></i>300金币
+                        </button>
+                        <span class="ml-2 text-xs text-gray-400">x<span id="powerup-speed-count">0</span></span>
+                    </div>
+                </div>
+                <div class="bg-gray-808 p-4 rounded-lg shop-item">
+                    <h3 class="text-sm mb-2">护盾道具</h3>
+                    <div class="w-full h-20 bg-green-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-shield-alt text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">免疫一次碰撞伤害</p>
+                    <div class="flex items-center">
+                        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="powerup-shield" data-price="400">
+                            <i class="fas fa-coins mr-1"></i>400金币
+                        </button>
+                        <span class="ml-2 text-xs text-gray-400">x<span id="powerup-shield-count">0</span></span>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shop-item">
+                    <h3 class="text-sm mb-2">双倍分数</h3>
+                    <div class="w-full h-20 bg-purple-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-star text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">30秒内获得双倍分数</p>
+                    <div class="flex items-center">
+                        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="powerup-double" data-price="600">
+                            <i class="fas fa-coins mr-1"></i>600金币
+                        </button>
+                        <span class="ml-2 text-xs text-gray-400">x<span id="powerup-double-count">0</span></span>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shop-item">
+                    <h3 class="text-sm mb-2">迷你蛇</h3>
+                    <div class="w-full h-20 bg-pink-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-compress text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">你的蛇变得更短更难被击中</p>
+                    <div class="flex items-center">
+                        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs w-full buy-btn" data-id="powerup-mini" data-price="700">
+                            <i class="fas fa-coins mr-1"></i>700金币
+                        </button>
+                        <span class="ml-2 text-xs text-gray-400">x<span id="powerup-mini-count">0</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 其他类别 -->
+            <h3 class="text-left mb-3 border-b border-gray-700 pb-2"><i class="fas fa-gem mr-2"></i>特殊物品</h3>
+            <div class="grid grid-cols-1 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg shop-item">
+                    <h3 class="text-sm mb-2">改名卡</h3>
+                    <div class="w-full h-20 bg-indigo-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-signature text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">更改你的玩家名称</p>
+                    <div class="flex">
+                        <input type="text" id="name-input" class="flex-grow bg-gray-700 text-white px-2 py-1 rounded-l text-xs mb-2" placeholder="新名称" maxlength="12">
+                        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-r text-xs buy-btn" data-id="item-name" data-price="1000">
+                            <i class="fas fa-coins mr-1"></i>1000金币
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="close-shop" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg">
+                    关闭商店
+                </button>
+                <button id="inventory-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-box-open mr-2"></i>My Items
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排行榜模态框 -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl mb-6"><i class="fas fa-trophy mr-2"></i>排行榜</h2>
+            
+            <div class="flex justify-center mb-4">
+                <div class="flex space-x-2">
+                    <button id="daily-leaderboard" class="bg-blue-600 text-white px-3 py-1 rounded text-xs active-tab">
+                        今日
+                    </button>
+                    <button id="weekly-leaderboard" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">
+                        本周
+                    </button>
+                    <button id="alltime-leaderboard" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">
+                        历史
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-6" id="leaderboard-content">
+                <div class="leaderboard-item text-yellow-400">
+                    <span>1. 超级玩家</span>
+                    <span>12500分</span>
+                </div>
+                <div class="leaderboard-item text-gray-300">
+                    <span>2. 贪吃蛇大师</span>
+                    <span>9800分</span>
+                </div>
+                <div class="leaderboard-item text-amber-600">
+                    <span>3. 蛇王</span>
+                    <span>8750分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>4. 游戏高手</span>
+                    <span>7600分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>5. 新手玩家</span>
+                    <span>5400分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>6. 快乐吃货</span>
+                    <span>4800分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>7. 速度之星</span>
+                    <span>4200分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>8. 躲避高手</span>
+                    <span>3900分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>9. 幸运玩家</span>
+                    <span>3600分</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span>10. 休闲玩家</span>
+                    <span>3200分</span>
+                </div>
+                <div class="leaderboard-item" id="current-player-rank">
+                    <span>25. 你 (玩家1)</span>
+                    <span>1200分</span>
+                </div>
+            </div>
+            
+            <div class="text-xs text-gray-400 mb-4">
+                <p>排行榜每小时更新一次。</p>
+                <p>前3名玩家将获得金币奖励。</p>
+            </div>
+            
+            <button id="close-leaderboard" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg">
+                关闭排行榜
+            </button>
+        </div>
+    </div>
+    
+    <!-- 物品栏模态框 -->
+    <div id="inventory-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl mb-6"><i class="fas fa-box-open mr-2"></i>我的物品</h2>
+            
+            <!-- 已拥有皮肤 -->
+            <h3 class="text-left mb-3 border-b border-gray-700 pb-2"><i class="fas fa-paint-brush mr-2"></i>皮肤</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm mb-2">经典红色</h3>
+                    <div class="w-full h-20 bg-red-600 mb-2 rounded"></div>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs w-full select-skin-btn" data-id="skin-classic" data-selected="true">
+                        <i class="fas fa-check mr-1"></i>已使用
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 已拥有道具 -->
+            <h3 class="text-left mb-3 border-b border-gray-700 pb-2"><i class="fas fa-magic mr-2"></i>道具</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm mb-2">加速道具</h3>
+                    <div class="w-full h-20 bg-blue-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-bolt text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">剩余数量: 0</p>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs w-full use-item-btn" data-id="powerup-speed" disabled>
+                        使用
+                    </button>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm mb-2">护盾道具</h3>
+                    <div class="w-full h-20 bg-green-500 flex items-center justify-center mb-2 rounded">
+                        <i class="fas fa-shield-alt text-3xl"></i>
+                    </div>
+                    <p class="text-xs mb-2">剩余数量: 0</p>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs w-full use-item-btn" data-id="powerup-shield" disabled>
+                        使用
+                    </button>
+                </div>
+            </div>
+            
+            <button id="close-inventory" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg">
+                关闭物品栏
+            </button>
+        </div>
+    </div>
+    
+    <!-- 游戏结束模态框 -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl mb-4 text-red-500">游戏结束!</h2>
+            <p class="mb-2">你的最终分数: <span id="final-score" class="font-bold">0</span></p>
+            <p class="mb-4">获得金币: <span id="earned-coins" class="font-bold text-yellow-400">0</span></p>
+            <div class="flex justify-center space-x-4">
+                <button id="restart-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-redo mr-2"></i>重新开始
+                </button>
+                <button id="share-btn" class="blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-share-alt mr-2"></i>分享成绩
+                </button>
+            </div>
+            <div class="mt-6 text-xs text-gray-400">
+                <p>观看广告可以获得双倍金币奖励!</p>
+                <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1 rounded mt-2" id="watch-ad-btn">
+                    <i class="fas fa-ad mr-1"></i>观看广告
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部信息 -->
+    <footer class="bg-gray-900 text-white text-center py-4 text-xs">
+        <p>© 2025 Multiplayer Snake Game | Ad revenue supports server maintenance</p>
+        <p class="mt-1">Built with HTML5, CSS3, and JavaScript</p>
+    </footer>
+
+    <script>
+        // 游戏变量
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        const MAX_PLAYERS = 50; // 最大支持50名玩家
+        let snake = [];
+        let foods = [];
+        let powerUps = null;
+        let direction = 'right';
+        let nextDirection = 'right';
+        let gameRunning = false;
+        let gamePaused = false;
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let coins = parseInt(localStorage.getItem('snakeCoins')) || 0;
+        let gameSpeed = 150;
+        // let gameLoop;
+        let isMultiplayer = false;
+        let players = {};
+        let playerId = null;
+        let playerName = '玩家' + Math.floor(Math.random() * 1000);
+        let inventory = JSON.parse(localStorage.getItem('snakeInventory') || '{"skins":["skin-classic"],"items":{},"selectedSkin":"skin-classic"}');
+        let socket = null;
+        let roomId = 'default';
+        let isTyping = false;
+        let chatActivity = {};
+        let snakeHeadColor = '#e94560';
+        let snakeBodyColor = '#0f3460';
+        
+        // WebSocket 连接
+        function connectToServer(newRoomId) {
+            roomId = newRoomId;
+            socket = new WebSocket(`ws://localhost:8080?room=${roomId}`);
+
+            socket.onopen = () => {
+                addChatMessage('系统', `已连接到房间 ${roomId}`);
+                sendPlayerData();
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'init') {
+                    playerId = data.playerId;
+                    roomId = data.roomId;
+                    players = data.data.players;
+                    foods = data.data.foods;
+                    powerUps = data.data.powerUps;
+                    updatePlayerList();
+                    drawGame();
+                } else if (data.type === 'players') {
+                    players = data.data;
+                    updatePlayerList();
+                    drawGame();
+                } else if (data.type === 'chat') {
+                    addChatMessage(data.sender, data.message);
+                } else if (data.type === 'foods') {
+                    foods = data.data;
+                } else if (data.type === 'powerUps') {
+                    powerUps = data.data;
+                }
+            };
+
+            socket.onclose = () => {
+                addChatMessage('系统', '与服务器断开连接');
+                isMultiplayer = false;
+                document.getElementById('multiplayer-btn').innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+                document.getElementById('multiplayer-btn').classList.remove('bg-purple-600');
+                document.getElementById('multiplayer-btn').classList.add('bg-blue-600');
+                players = {};
+                updatePlayerList();
+            };
+        }
+
+
+
+        // 初始化游戏
+        function initGame() {
+            snake = [];
+            for (let i = 3; i >= 0; i--) {
+                snake.push({ x: i, y: 0 });
+            }
+            
+            spawnFood();
+            spawnPowerUp();
+            
+            direction = 'right';
+            nextDirection = 'right';
+            score = 0;
+            updateScore();
+            
+            // 应用选择的皮肤
+            applySelectedSkin();
+
+            // 如果是多人游戏，发送初始位置
+            if (isMultiplayer) {
+                sendPlayerData();
+            }
+        }
+        
+        // 应用选择的皮肤
+        function applySelectedSkin() {
+            // 根据选中的皮肤设置蛇的颜色
+            switch (inventory.selectedSkin) {
+                case 'skin-classic':
+                    snakeHeadColor = '#e94560'; // 红色
+                    snakeBodyColor = '#0f3460'; // 深蓝色
+                    break;
+                case 'skin-fire':
+                    snakeHeadColor = '#ff4500'; // 火焰橙色
+                    snakeBodyColor = '#ff6347'; // 番茄色
+                    break;
+                case 'skin-rainbow':
+                    snakeHeadColor = '#ff007f'; // 粉红色
+                    snakeBodyColor = '#9400d3'; // 紫色
+                    break;
+                case 'skin-ghost':
+                    snakeHeadColor = 'rgba(255, 255, 255, 0.7)'; // 半透明白色
+                    snakeBodyColor = 'rgba(200, 200, 200, 0.5)'; // 半透明灰色
+                    break;
+                default:
+                    snakeHeadColor = '#e94560'; // 默认红色
+                    snakeBodyColor = '#0f3460'; // 默认深蓝色
+                    break;
+            }
+        }
+        
+        // 生成食物
+        function spawnFood() {
+            // food = {
+            //     x: Math.floor(Math.random() * tileCount),
+            //     y: Math.floor(Math.random() * tileCount),
+            //     hasAd: Math.random() < 0.5 // 50% 概率生成广告
+            // };
+            
+            // // 确保食物不会生成在蛇身上
+            // for (let segment of snake) {
+            //     if (segment.x === food.x && segment.y === food.y) {
+            //         return spawnFood();
+            //     }
+            // }
+            const newFood = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount),
+                hasAd: Math.random() < 0.5
+            };
+            foods.push(newFood);
+        }
+        
+        // 本地生成道具（单人模式）
+        function spawnPowerUp() {
+            if (Math.random() < 0.3) { // 30%几率生成道具
+                powerUps = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount),
+                    type: Math.random() < 0.5 ? 'speed' : 'shield'
+                };
+                
+                // 确保道具不会生成在蛇身上或食物上
+                for (let segment of snake) {
+                    if ((segment.x === powerUps.x && segment.y === powerUps.y) || 
+                        (food.x === powerUps.x && food.y === powerUps.y)) {
+                        return spawnPowerUp();
+                    }
+                }
+            } else {
+                powerUps = [];
+            }
+        }
+        
+        // 游戏主循环
+        function gameUpdate() {
+            if (!gameRunning || gamePaused) return;
+
+            // 更新蛇的位置
+            let head = { x: snake[0].x, y: snake[0].y };
+
+            // 根据方向移动头部
+            switch (direction) {
+                case 'up':
+                    head.y--;
+                    break;
+                case 'down':
+                    head.y++;
+                    break;
+                case 'left':
+                    head.x--;
+                    break;
+                case 'right':
+                    head.x++;
+                    break;
+            }
+
+            // 检查是否撞墙
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOver();
+                return;
+            }
+
+            // 检查是否撞到自己
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            // 检查其他玩家碰撞
+            if (isMultiplayer) {
+                for (let id in players) {
+                    if (id !== playerId && players[id].snake) {
+                        for (let segment of players[id].snake) {
+                            if (head.x === segment.x && head.y === segment.y) {
+                                gameOver();
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            // 检查食物
+            let foodEaten = false;
+            for (let i = 0; i < foods.length; i++) {
+                if (head.x === foods[i].x && head.y === foods[i].y) {
+                    score += 10;
+                    if (foods[i].hasAd) {
+                        score += 5;
+                        coins += 5;
+                        updateCoins();
+                        addChatMessage('系统', '获得广告奖励: +5分和+5金币!');
+                    }
+                    foodEaten = true;
+                    if (isMultiplayer) {
+                        socket.send(JSON.stringify({ type: 'foodEaten', x: foods[i].x, y: foods[i].y }));
+                    } else {
+                        foods.splice(i, 1);
+                        spawnFood();
+                    }
+                    break;
+                }
+            }
+
+            // 检查道具
+            let powerUpEaten = false;
+            for (let i = 0; i < powerUps.length; i++) {
+                if (head.x === powerUps[i].x && head.y === powerUps[i].y) {
+                    if (powerUps[i].type === 'speed') {
+                        gameSpeed = Math.max(50, gameSpeed - 20);
+                        setTimeout(() => gameSpeed = 150, 10000);
+                    } else if (powerUps[i].type === 'shield') {
+                        // 这里可以添加护盾效果
+                    }
+                    powerUpEaten = true;
+                    if (isMultiplayer) {
+                        socket.send(JSON.stringify({ type: 'powerUpEaten', x: powerUps[i].x, y: powerUps[i].y }));
+                    } else {
+                        powerUps.splice(i, 1);
+                        spawnPowerUp();
+                    }
+                    break;
+                }
+            }
+
+            // 检查是否吃到食物
+            // if (head.x === food.x && head.y === food.y) {
+            //     score += 10;
+                
+            //     // 如果有广告，增加额外奖励
+            //     if (food.hasAd) {
+            //         score += 5; // 额外5分
+            //         coins += 5; // 额外5金币
+            //         updateCoins();
+            //         addChatMessage('系统', '获得广告奖励: +5分和+5金币!');
+            //     }
+                
+            //     updateScore();
+            //     spawnFood();
+            //     spawnPowerUp();
+
+            //     // 增加速度（可根据分数调整）
+            //     if (score % 50 === 0) {
+            //         gameSpeed = Math.max(50, gameSpeed - 10); // 每50分加速一次
+            //         restartGameLoop();
+            //     }
+            // } else {
+            //     snake.pop(); // 删除尾部
+            // }
+
+            // 添加新的头部
+            // snake.unshift(head);
+
+            // 更新方向
+            // direction = nextDirection;
+
+            // 绘制游戏
+            // drawGame();
+            
+            // 多人游戏时定期发送数据
+            // if (isMultiplayer && gameLoop % 5 === 0) {
+            //     sendPlayerData();
+            // }
+
+            if (foodEaten || powerUpEaten) {
+                updateScore();
+            } else {
+                snake.pop();
+            }
+            snake.unshift(head);
+            direction = nextDirection;
+
+            drawGame();
+            if (isMultiplayer) sendPlayerData();
+        }
+        
+        function restartGameLoop() {
+            clearInterval(gameLoop);
+            gameLoop = setInterval(gameUpdate, gameSpeed);
+        }
+        
+        // 绘制游戏
+        function drawGame() {
+            // 清空画布
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制网格线
+            ctx.strokeStyle = '#0f3460';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < tileCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * gridSize, 0);
+                ctx.lineTo(i * gridSize, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * gridSize);
+                ctx.lineTo(canvas.width, i * gridSize);
+                ctx.stroke();
+            }
+            
+            // 绘制蛇
+            for (let i = 0; i < snake.length; i++) {
+                if (i === 0) {
+                    // 蛇头
+                    ctx.fillStyle = snakeHeadColor;
+                    ctx.beginPath();
+                    ctx.arc(
+                        snake[i].x * gridSize + gridSize / 2,
+                        snake[i].y * gridSize + gridSize / 2,
+                        gridSize / 2,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // 眼睛
+                    ctx.fillStyle = 'white';
+                    let eyeOffsetX = 0, eyeOffsetY = 0;
+                    switch (direction) {
+                        case 'up':
+                            eyeOffsetX = -3;
+                            eyeOffsetY = -3;
+                            break;
+                        case 'down':
+                            eyeOffsetX = -3;
+                            eyeOffsetY = 3;
+                            break;
+                        case 'left':
+                            eyeOffsetX = -3;
+                            eyeOffsetY = 0;
+                            break;
+                        case 'right':
+                            eyeOffsetX = 3;
+                            eyeOffsetY = 0;
+                            break;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(
+                        snake[i].x * gridSize + gridSize / 2 + eyeOffsetX,
+                        snake[i].y * gridSize + gridSize / 2 + eyeOffsetY,
+                        3,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                } else {
+                    // 蛇身
+                    ctx.fillStyle = snakeBodyColor;
+                    ctx.fillRect(
+                        snake[i].x * gridSize + 2,
+                        snake[i].y * gridSize + 2,
+                        gridSize - 4,
+                        gridSize - 4
+                    );
+                }
+            }
+            
+            // 绘制食物
+            ctx.fillStyle = '#f9b208';
+            ctx.beginPath();
+            ctx.arc(
+                food.x * gridSize + gridSize / 2,
+                food.y * gridSize + gridSize / 2,
+                gridSize / 2 - 2,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+
+            if (food.hasAd) {
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('广告', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2 + 4);
+            }
+            
+            // 绘制能量道具
+            if (powerUps) {
+                ctx.fillStyle = powerUps.type === 'speed' ? '#00b4d8' : '#38b000';
+                ctx.beginPath();
+                ctx.arc(
+                    powerUps.x * gridSize + gridSize / 2,
+                    powerUps.y * gridSize + gridSize / 2,
+                    gridSize / 2 - 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                
+                // 绘制图标
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(
+                    powerUps.type === 'speed' ? '⚡' : '🛡️',
+                    powerUps.x * gridSize + gridSize / 2,
+                    powerUps.y * gridSize + gridSize / 2
+                );
+            }
+            
+            // 绘制其他玩家
+            if (isMultiplayer) {
+                for (let id in players) {
+                    if (id !== playerId && players[id].snake) {
+                        let otherSnake = players[id].snake;
+                        let otherColor = players[id].color || '#555';
+                        
+                        for (let i = 0; i < otherSnake.length; i++) {
+                            if (i === 0) {
+                                // 其他玩家的蛇头
+                                ctx.fillStyle = otherColor;
+                                ctx.beginPath();
+                                ctx.arc(
+                                    otherSnake[i].x * gridSize + gridSize / 2,
+                                    otherSnake[i].y * gridSize + gridSize / 2,
+                                    gridSize / 2,
+                                    0,
+                                    Math.PI * 2
+                                );
+                                ctx.fill();
+                                
+                                // 绘制玩家名称标签
+                                if (players[id].name) {
+                                    ctx.fillStyle = 'white';
+                                    ctx.font = '10px Arial';
+                                    ctx.textAlign = 'center';
+                                    ctx.fillText(
+                                        players[id].name,
+                                        otherSnake[i].x * gridSize + gridSize / 2,
+                                        otherSnake[i].y * gridSize - 5
+                                    );
+                                }
+                            } else {
+                                // 其他玩家的蛇身
+                                ctx.fillStyle = otherColor;
+                                ctx.fillRect(
+                                    otherSnake[i].x * gridSize + 2,
+                                    otherSnake[i].y * gridSize + 2,
+                                    gridSize - 4,
+                                    gridSize - 4
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 发送玩家数据
+        function sendPlayerData(gameOver = false) {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+            socket.send(JSON.stringify({
+                type: 'update',
+                snake: gameOver ? null : [...snake],
+                score: score,
+                name: playerName,
+                color: snakeHeadColor
+            }));
+        }
+        
+        // 更新分数显示
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('speed').textContent = 150 - gameSpeed; // 显示速度级别
+            
+            if (score > highScore) {
+                highScore = score;
+                document.getElementById('high-score').textContent = highScore;
+                localStorage.setItem('snakeHighScore', highScore);
+            }
+        }
+        
+        // 更新金币显示
+        function updateCoins() {
+            document.getElementById('coins').textContent = coins;
+            document.getElementById('shop-coins').textContent = coins;
+            localStorage.setItem('snakeCoins', coins);
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            // clearInterval(gameLoop);
+            // gameRunning = false;
+            
+            // document.getElementById('final-score').textContent = score;
+            // let earnedCoins = Math.floor(score / 2);
+            // document.getElementById('earned-coins').textContent = earnedCoins;
+            
+            // // 增加金币
+            // coins += earnedCoins;
+            // updateCoins();
+            
+            // // 更新排行榜数据
+            // updateLocalLeaderboard(score);
+            
+            // // 显示游戏结束模态框
+            // document.getElementById('game-over-modal').style.display = 'flex';
+            
+            // // 如果是多人游戏，发送游戏结束消息
+            // if (isMultiplayer) {
+            //     sendPlayerData(true);
+            //     addChatMessage('系统', `${playerName} 游戏结束! 得分: ${score}`);
+            // }
+            gameRunning = false;
+            document.getElementById('final-score').textContent = score;
+            let earnedCoins = Math.floor(score / 2);
+            document.getElementById('earned-coins').textContent = earnedCoins;
+            coins += earnedCoins;
+            updateCoins();
+            updateLocalLeaderboard(score);
+            document.getElementById('game-over-modal').style.display = 'flex';
+            if (isMultiplayer) {
+                sendPlayerData(true);
+                addChatMessage('系统', `${playerName} 游戏结束! 得分: ${score}`);
+            }
+        }
+
+        function connectToServer() {
+        socket = new WebSocket('ws://localhost:8080');
+        
+        socket.onopen = () => {
+            addChatMessage('系统', '已连接到多人游戏服务器');
+            sendPlayerData(); // 发送初始数据
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'init') {
+                playerId = data.playerId;
+            } else if (data.type === 'players') {
+                players = data.data;
+                updatePlayerList();
+                drawGame();
+            } else if (data.type === 'chat') {
+                addChatMessage(data.sender, data.message);
+            }
+        };
+
+        socket.onclose = () => {
+            addChatMessage('系统', '与服务器断开连接');
+            isMultiplayer = false;
+            document.getElementById('multiplayer-btn').innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+            document.getElementById('multiplayer-btn').classList.remove('bg-purple-600');
+            document.getElementById('multiplayer-btn').classList.add('bg-blue-600');
+        };
+        
+        document.getElementById('multiplayer-btn').addEventListener('click', function() {
+    isMultiplayer = !isMultiplayer;
+    if (isMultiplayer) {
+        this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
+        this.classList.remove('bg-blue-600');
+        this.classList.add('bg-purple-600');
+        connectToServer();
+    } else {
+        this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+        this.classList.remove('bg-purple-600');
+        this.classList.add('bg-blue-600');
+        if (socket) socket.close();
+        players = {};
+        updatePlayerList();
+    }
+});
+    }
+        
+        // 更新本地排行榜数据
+        function updateLocalLeaderboard(newScore) {
+            let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard') || '{"daily":[], "weekly":[], "alltime":[]}');
+            let today = new Date().toISOString().split('T')[0];
+            
+            // 更新今日排行榜
+            let dailyIndex = leaderboard.daily.findIndex(item => item.date === today);
+            if (dailyIndex >= 0) {
+                if (newScore > leaderboard.daily[dailyIndex].score) {
+                    leaderboard.daily[dailyIndex].score = newScore;
+                }
+            } else {
+                leaderboard.daily.push({
+                    date: today,
+                    name: playerName,
+                    score: newScore
+                });
+            }
+            
+            // 更新本周排行榜
+            let weekStart = getWeekStartDate();
+            let weeklyIndex = leaderboard.weekly.findIndex(item => item.week === weekStart);
+            if (weeklyIndex >= 0) {
+                if (newScore > leaderboard.weekly[weeklyIndex].score) {
+                    leaderboard.weekly[weeklyIndex].score = newScore;
+                }
+            } else {
+                leaderboard.weekly.push({
+                    week: weekStart,
+                    name: playerName,
+                    score: newScore
+                });
+            }
+            
+            // 更新历史排行榜
+            let alltimeIndex = leaderboard.alltime.findIndex(item => item.name === playerName);
+            if (alltimeIndex >= 0) {
+                if (newScore > leaderboard.alltime[alltimeIndex].score) {
+                    leaderboard.alltime[alltimeIndex].score = newScore;
+                }
+            } else {
+                leaderboard.alltime.push({
+                    name: playerName,
+                    score: newScore
+                });
+            }
+            
+            // 排序并保存
+            leaderboard.daily.sort((a, b) => b.score - a.score);
+            leaderboard.weekly.sort((a, b) => b.score - a.score);
+            leaderboard.alltime.sort((a, b) => b.score - a.score);
+            
+            localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
+        }
+        
+        // 获取本周开始日期
+        function getWeekStartDate() {
+            let date = new Date();
+            let day = date.getDay();
+            let diff = date.getDate() - day + (day === 0 ? -6 : 1); // 获取周一
+            let monday = new Date(date.setDate(diff));
+            return monday.toISOString().split('T')[0];
+        }
+        
+        // 开始游戏
+        function startGame() {
+            if (gameRunning) return;
+
+            initGame();
+            gameRunning = true;
+            gamePaused = false;
+
+            gameSpeed = 150; // 初始速度
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('pause-btn').disabled = false;
+
+            restartGameLoop();
+            requestAnimationFrame(gameLoop);
+            if (!isMultiplayer) {
+                foods = [];
+                powerUps = [];
+                spawnFood();
+                spawnPowerUp();
+            }
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            if (gameRunning && !gamePaused) {
+                gameUpdate();
+                setTimeout(() => requestAnimationFrame(gameLoop), gameSpeed);
+            }
+        }
+        
+        // 暂停游戏
+        function pauseGame() {
+            if (!gameRunning) return;
+            
+            gamePaused = !gamePaused;
+            
+            if (gamePaused) {
+                clearInterval(gameLoop);
+                document.getElementById('pause-btn').innerHTML = '<i class="fas fa-play mr-2"></i>继续';
+            } else {
+                gameLoop = setInterval(gameUpdate, gameSpeed);
+                document.getElementById('pause-btn').innerHTML = '<i class="fas fa-pause mr-2"></i>暂停';
+            }
+        }
+        
+        canvas.addEventListener('click', function (e) {
+            if (!gameRunning || gamePaused) return;
+
+            // 获取鼠标点击位置
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // 获取蛇头位置
+            const headX = snake[0].x * gridSize + gridSize / 2;
+            const headY = snake[0].y * gridSize + gridSize / 2;
+
+            // 计算点击位置与蛇头的相对位置
+            const dx = clickX - headX;
+            const dy = clickY - headY;
+
+            // 判断方向
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // 水平移动
+                if (dx > 0 && direction !== 'left') {
+                    nextDirection = 'right';
+                } else if (dx < 0 && direction !== 'right') {
+                    nextDirection = 'left';
+                }
+            } else {
+                // 垂直移动
+                if (dy > 0 && direction !== 'up') {
+                    nextDirection = 'down';
+                } else if (dy < 0 && direction !== 'down') {
+                    nextDirection = 'up';
+                }
+            }
+        });
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            if (!gameRunning || gamePaused) return;
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w': // 支持 W 键
+                    if (direction !== 'down') nextDirection = 'up';
+                    break;
+                case 'ArrowDown':
+                case 's': // 支持 S 键
+                    if (direction !== 'up') nextDirection = 'down';
+                    break;
+                case 'ArrowLeft':
+                case 'a': // 支持 A 键
+                    if (direction !== 'right') nextDirection = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'd': // 支持 D 键
+                    if (direction !== 'left') nextDirection = 'right';
+                    break;
+            }
+        });
+        
+        
+        // 按钮事件
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('pause-btn').addEventListener('click', pauseGame);
+        document.getElementById('restart-btn').addEventListener('click', function() {
+            document.getElementById('game-over-modal').style.display = 'none';
+            startGame();
+        });
+        
+        // 多人模式切换
+        document.getElementById('multiplayer-btn').addEventListener('click', function() {
+            isMultiplayer = !isMultiplayer;
+            if (isMultiplayer) {
+                this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
+                this.classList.remove('bg-blue-600');
+                this.classList.add('bg-purple-600');
+                let newRoomId = prompt('输入房间号（留空为默认房间）') || 'default';
+                connectToServer(newRoomId);
+            } else {
+                this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+                this.classList.remove('bg-purple-600');
+                this.classList.add('bg-blue-600');
+                if (socket) socket.close();
+                players = {};
+                updatePlayerList();
+            }
+        });
+        // document.getElementById('multiplayer-btn').addEventListener('click', function() {
+        //     isMultiplayer = !isMultiplayer;
+        //     if (isMultiplayer) {
+        //         this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
+        //         this.classList.remove('bg-blue-600');
+        //         this.classList.add('bg-purple-600');
+                
+        //         // 模拟连接服务器
+        //         addChatMessage('系统', '正在连接多人游戏服务器...');
+                
+        //         setTimeout(() => {
+        //             // 模拟服务器响应
+        //             addChatMessage('系统', '已连接到多人游戏服务器');
+        //             addChatMessage('系统', `当前房间人数: ${Math.floor(Math.random() * 20) + 5}/${MAX_PLAYERS}`);
+                    
+        //             // 模拟其他玩家加入
+        //             // simulatePlayerJoin();
+        //             updatePlayerList();
+                    
+        //         }, 1000 + Math.random() * 1000);
+        //     } else {
+        //         this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+        //         this.classList.remove('bg-purple-600');
+        //         this.classList.add('bg-blue-600');
+                
+        //         // 清除其他玩家
+        //         players = {};
+        //         updatePlayerList();
+        //         addChatMessage('系统', '已断开多人游戏连接');
+        //     }
+        // });
+        
+        // 模拟其他玩家加入
+        function simulatePlayerJoin() {
+            // 生成3-15个模拟玩家
+            const botCount = Math.floor(Math.random() * 13) + 3;
+            
+            // 模拟玩家名称池
+            const botNames = [
+                '游戏大师', '贪吃蛇高手', '快乐玩家', '新手小白', '超级玩家', 
+                '蛇王', '躲避专家', '速度之星', '高分猎人', '休闲玩家',
+                '竞技玩家', '高分记录', '挑战者', '终结者', '小蛇蛇'
+            ];
+            
+            // 生成不同颜色的池
+            const colors = [];
+            for (let i = 0; i < botCount; i++) {
+                colors.push(getRandomColor());
+            }
+            
+            // 分批模拟玩家加入
+            for (let i = 0; i < botCount; i++) {
+                setTimeout(() => {
+                    let botName = botNames[Math.floor(Math.random() * botNames.length)];
+                    while (Object.values(players).some(p => p.name === botName)) {
+                        botName = botNames[Math.floor(Math.random() * botNames.length)];
+                    }
+                    
+                    // 添加模拟玩家
+                    let botId = 'bot-' + Math.random().toString(36).substr(2, 9);
+                    players[botId] = {
+                        name: botName,
+                        snake: generateRandomSnake(),
+                        score: Math.floor(Math.random() * 800),
+                        color: colors[i],
+                        lastUpdate: Date.now()
+                    };
+                    
+                    addChatMessage('系统', `${botName} 加入了游戏`);
+                    updatePlayerList();
+                    
+                    // 模拟玩家移动
+                    if (Math.random() < 0.3) {
+                        simulatePlayerActivity(botId);
+                    }
+                    
+                }, 500 + Math.random() * 3000 * (i / botCount));
+            }
+            
+            // 为一些模拟玩家添加打字和聊天行为
+            const typingBots = Math.floor(botCount / 3);
+            for (let i = 0; i < typingBots; i++) {
+                setTimeout(() => {
+                    simulateOtherPlayerTyping();
+                }, 3000 + Math.random() * 5000);
+            }
+        }
+        
+        // 生成随机蛇
+        function generateRandomSnake() {
+            const length = Math.floor(Math.random() * 10) + 3;
+            const x = Math.floor(Math.random() * (tileCount - length - 5)) + 5;
+            const y = Math.floor(Math.random() * (tileCount - 5)) + 2;
+            const direction = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
+            
+            const snake = [];
+            for (let i = 0; i < length; i++) {
+                switch(direction) {
+                    case 'up':
+                        snake.push({x: x, y: y + i});
+                        break;
+                    case 'down':
+                        snake.push({x: x, y: y - i});
+                        break;
+                    case 'left':
+                        snake.push({x: x + i, y: y});
+                        break;
+                    case 'right':
+                        snake.push({x: x - i, y: y});
+                        break;
+                }
+            }
+            
+            return snake;
+        }
+        
+        // 获取随机颜色
+        function getRandomColor() {
+            const colors = [
+                '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+                '#33FFF3', '#8A2BE2', '#7FFFD4', '#D2691E', '#FF7F50',
+                '#6495ED', '#ADFF2F', '#FF69B4', '#CD5C5C', '#F0E68C'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // 模拟玩家活动
+        function simulatePlayerActivity(playerId) {
+            if (!players[playerId] || !isMultiplayer) return;
+            
+            const directions = ['up', 'down', 'left', 'right'];
+            const interval = setInterval(() => {
+                if (!players[playerId] || !isMultiplayer) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                // 随机移动
+                const head = {...players[playerId].snake[0]};
+                const currentDirection = players[playerId].direction || directions[Math.floor(Math.random() * 4)];
+                
+                // 60%几率继续当前方向，40%随机转向
+                const newDirection = Math.random() < 0.6 ? currentDirection : 
+                                    directions.filter(d => d !== currentDirection)[Math.floor(Math.random() * 3)];
+                
+                players[playerId].direction = newDirection;
+                
+                // 移动头部
+                switch(newDirection) {
+                    case 'up':
+                        head.y--;
+                        break;
+                    case 'down':
+                        head.y++;
+                        break;
+                    case 'left':
+                        head.x--;
+                        break;
+                    case 'right':
+                        head.x++;
+                        break;
+                }
+                
+                // 检查边界
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    // 游戏结束
+                    const name = players[playerId].name;
+                    delete players[playerId];
+                    updatePlayerList();
+                    addChatMessage('系统', `${name} 游戏结束!`);
+                    clearInterval(interval);
+                    return;
+                }
+                
+                // 检查是否撞到自己
+                for (let segment of players[playerId].snake) {
+                    if (head.x === segment.x && head.y === segment.y) {
+                        // 游戏结束
+                        const name = players[playerId].name;
+                        delete players[playerId];
+                        updatePlayerList();
+                        addChatMessage('系统', `${name} 撞到自己了!`);
+                        clearInterval(interval);
+                        return;
+                    }
+                }
+                
+                // 模拟吃到食物
+                if (Math.random() < 0.1) {
+                    players[playerId].score += 10;
+                    players[playerId].snake.unshift(head);
+                } else {
+                    players[playerId].snake.pop();
+                    players[playerId].snake.unshift(head);
+                }
+                
+                // 更新最后活动时间
+                players[playerId].lastUpdate = Date.now();
+                
+                // 10%几率发送聊天消息
+                if (Math.random() < 0.1) {
+                    setTimeout(() => {
+                        if (players[playerId]) {
+                            const messages = [
+                                '我在得分!', '有人在这里吗?', '小心我的蛇!', 
+                                '这个游戏真有趣', '我要赢了!', '大家加油',
+                                '小心别撞墙', '我刚吃了个道具'
+                            ];
+                            const message = messages[Math.floor(Math.random() * messages.length)];
+                            addChatMessage(players[playerId].name, message);
+                        }
+                    }, Math.random() * 2000);
+                }
+                
+                // 10%几率停止活动
+                if (Math.random() < 0.1) {
+                    addChatMessage('系统', `${players[playerId].name} 离开了游戏`);
+                    delete players[playerId];
+                    updatePlayerList();
+                    clearInterval(interval);
+                }
+                
+            }, 300 + Math.random() * 700);
+        }
+        
+        // 商店和排行榜模态框
+        document.getElementById('shop-btn').addEventListener('click', function() {
+            document.getElementById('shop-modal').style.display = 'flex';
+            updateShopItems();
+        });
+        
+        document.getElementById('leaderboard-btn').addEventListener('click', function() {
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+            showDailyLeaderboard();
+        });
+        
+        document.getElementById('close-shop').addEventListener('click', function() {
+            document.getElementById('shop-modal').style.display = 'none';
+        });
+        
+        document.getElementById('close-leaderboard').addEventListener('click', function() {
+            document.getElementById('leaderboard-modal').style.display = 'none';
+        });
+        
+        document.getElementById('inventory-btn').addEventListener('click', function() {
+            document.getElementById('shop-modal').style.display = 'none';
+            document.getElementById('inventory-modal').style.display = 'flex';
+            updateInventoryItems();
+        });
+        
+        document.getElementById('close-inventory').addEventListener('click', function() {
+            document.getElementById('inventory-modal').style.display = 'none';
+        });
+        
+        // 更新商店物品状态
+        function updateShopItems() {
+            document.querySelectorAll('.buy-btn').forEach(button => {
+                let itemId = button.dataset.id;
+                let price = parseInt(button.dataset.price);
+                
+                // 更新拥有的物品状态
+                if (button.dataset.owned === 'true' || inventory.skins.includes(itemId)) {
+                    button.innerHTML = '<i class="fas fa-check mr-1"></i>已拥有';
+                    button.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                    button.classList.add('bg-green-600', 'hover:bg-green-700');
+                    button.disabled = true;
+                    
+                    // 添加已拥有标识
+                    let shopItem = button.closest('.shop-item');
+                    if (!shopItem.querySelector('.owned-badge')) {
+                        let ownedBadge = document.createElement('span');
+                        ownedBadge.className = 'owned-badge';
+                        ownedBadge.textContent = '已拥有';
+                        shopItem.appendChild(ownedBadge);
+                    }
+                } else {
+                    // 更新可购买物品状态
+                    button.disabled = coins < price;
+                    if (coins < price) {
+                        button.classList.add('opacity-50');
+                    } else {
+                        button.classList.remove('opacity-50');
+                    }
+                }
+            });
+            
+            // 更新道具数量显示
+            for (let itemId in inventory.items) {
+                let countElement = document.getElementById(`${itemId}-count`);
+                if (countElement) {
+                    countElement.textContent = inventory.items[itemId];
+                }
+            }
+        }
+        
+        // 更新物品栏物品
+        function updateInventoryItems() {
+            let inventoryContent = document.getElementById('inventory-modal');
+            
+            // 更新皮肤
+            let skinsContainer = inventoryContent.querySelector('.grid.grid-cols-1.md\\:grid-cols-2');
+            skinsContainer.innerHTML = '';
+            
+            inventory.skins.forEach(skinId => {
+                let skinDiv = document.createElement('div');
+                skinDiv.className = 'bg-gray-800 p-4 rounded-lg';
+                
+                let skinName = '';
+                let skinColor = '';
+                
+                switch(skinId) {
+                    case 'skin-classic':
+                        skinName = '经典红色';
+                        skinColor = 'bg-red-600';
+                        break;
+                    case 'skin-fire':
+                        skinName = '火焰';
+                        skinColor = 'bg-gradient-to-r from-red-500 to-yellow-500';
+                        break;
+                    case 'skin-rainbow':
+                        skinName = '彩虹';
+                        skinColor = 'bg-gradient-to-r from-red-500 via-yellow-500 to-purple-500';
+                        break;
+                    case 'skin-ghost':
+                        skinName = '幽灵';
+                        skinColor = 'bg-gradient-to-r from-gray-300 to-gray-500';
+                        break;
+                }
+                
+                skinDiv.innerHTML = `
+                    <h3 class="text-sm mb-2">${skinName}</h3>
+                    <div class="w-full h-20 ${skinColor} mb-2 rounded"></div>
+                    <button class="select-skin-btn ${inventory.selectedSkin === skinId ? 
+                        'bg-green-600 hover:bg-green-700' : 
+                        'bg-blue-600 hover:bg-blue-700'} text-white px-3 py-1 rounded text-xs w-full" 
+                        data-id="${skinId}" data-selected="${inventory.selectedSkin === skinId}">
+                        ${inventory.selectedSkin === skinId ? 
+                            '<i class="fas fa-check mr-1"></i>已使用' : 
+                            '使用此皮肤'}
+                    </button>
+                `;
+                
+                skinsContainer.appendChild(skinDiv);
+            });
+            
+            // 更新道具
+            let itemsContainer = inventoryContent.querySelector('.grid:not(.grid-cols-1)');
+            itemsContainer.innerHTML = '';
+            
+            for (let itemId in inventory.items) {
+                if (inventory.items[itemId] > 0) {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'bg-gray-800 p-4 rounded-lg';
+                    
+                    let itemName = '';
+                    let itemIcon = '';
+                    let itemColor = '';
+                    
+                    switch(itemId) {
+                        case 'powerup-speed':
+                            itemName = '加速道具';
+                            itemIcon = 'bolt';
+                            itemColor = 'bg-blue-500';
+                            break;
+                        case 'powerup-shield':
+                            itemName = '护盾道具';
+                            itemIcon = 'shield-alt';
+                            itemColor = 'bg-green-500';
+                            break;
+                        case 'powerup-double':
+                            itemName = '双倍分数';
+                            itemIcon = 'star';
+                            itemColor = 'bg-purple-500';
+                            break;
+                        case 'powerup-mini':
+                            itemName = '迷你蛇';
+                            itemIcon = 'compress';
+                            itemColor = 'bg-pink-500';
+                            break;
+                    }
+                    
+                    itemDiv.innerHTML = `
+                        <h3 class="text-sm mb-2">${itemName}</h3>
+                        <div class="w-full h-20 ${itemColor} flex items-center justify-center mb-2 rounded">
+                            <i class="fas fa-${itemIcon} text-3xl"></i>
+                        </div>
+                        <p class="text-xs mb-2">剩余数量: ${inventory.items[itemId]}</p>
+                        <button class="use-item-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs w-full" 
+                                data-id="${itemId}">
+                            使用
+                        </button>
+                    `;
+                    
+                    itemsContainer.appendChild(itemDiv);
+                }
+            }
+        }
+        
+        // 排行榜切换
+        document.getElementById('daily-leaderboard').addEventListener('click', showDailyLeaderboard);
+        document.getElementById('weekly-leaderboard').addEventListener('click', showWeeklyLeaderboard);
+        document.getElementById('alltime-leaderboard').addEventListener('click', showAllTimeLeaderboard);
+        
+        function showDailyLeaderboard() {
+            document.getElementById('daily-leaderboard').classList.add('bg-blue-600', 'active-tab');
+            document.getElementById('daily-leaderboard').classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('weekly-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('weekly-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            document.getElementById('alltime-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('alltime-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            
+            let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard') || '{"daily":[]}');
+            let today = new Date().toISOString().split('T')[0];
+            let todayScores = leaderboard.daily.filter(item => item.date === today);
+            
+            updateLeaderboardContent(todayScores);
+        }
+        
+        function showWeeklyLeaderboard() {
+            document.getElementById('weekly-leaderboard').classList.add('bg-blue-600', 'active-tab');
+            document.getElementById('weekly-leaderboard').classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('daily-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('daily-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            document.getElementById('alltime-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('alltime-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            
+            let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard') || '{"weekly":[]}');
+            let weekStart = getWeekStartDate();
+            let weeklyScores = leaderboard.weekly.filter(item => item.week === weekStart);
+            
+            updateLeaderboardContent(weeklyScores);
+        }
+        
+        function showAllTimeLeaderboard() {
+            document.getElementById('alltime-leaderboard').classList.add('bg-blue-600', 'active-tab');
+            document.getElementById('alltime-leaderboard').classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('daily-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('daily-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            document.getElementById('weekly-leaderboard').classList.add('bg-gray-700', 'hover:bg-gray-600');
+            document.getElementById('weekly-leaderboard').classList.remove('bg-blue-600', 'active-tab');
+            
+            let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard') || '{"alltime":[]}');
+            updateLeaderboardContent(leaderboard.alltime);
+        }
+        
+        function updateLeaderboardContent(scores) {
+            let leaderboardContent = document.getElementById('leaderboard-content');
+            leaderboardContent.innerHTML = '';
+            
+            // 只显示前10名
+            let topScores = scores.slice(0, 10);
+            
+            topScores.forEach((scoreItem, index) => {
+                let item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                
+                // 为前三名设置不同颜色
+                if (index === 0) {
+                    item.classList.add('text-yellow-400');
+                } else if (index === 1) {
+                    item.classList.add('text-gray-300');
+                } else if (index === 2) {
+                    item.classList.add('text-amber-600');
+                }
+                
+                item.innerHTML = `
+                    <span>${index + 1}. ${scoreItem.name}</span>
+                    <span>${scoreItem.score}分</span>
+                `;
+                
+                leaderboardContent.appendChild(item);
+            });
+            
+            // 添加当前玩家排名（如果不在前10名中）
+            let currentPlayerIndex = scores.findIndex(item => item.name === playerName);
+            if (currentPlayerIndex >= 10) {
+                let currentItem = document.createElement('div');
+                currentItem.className = 'leaderboard-item';
+                currentItem.id = 'current-player-rank';
+                currentItem.innerHTML = `
+                    <span>${currentPlayerIndex + 1}. 你 (${playerName})</span>
+                    <span>${scores[currentPlayerIndex].score}分</span>
+                `;
+                leaderboardContent.appendChild(currentItem);
+            }
+            
+            // 如果没有数据，显示提示
+            if (topScores.length === 0) {
+                let noData = document.createElement('div');
+                noData.className = 'text-center text-gray-400 py-4';
+                noData.textContent = '暂无数据';
+                leaderboardContent.appendChild(noData);
+            }
+        }
+        
+        // 聊天功能
+        document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+        
+        // 监听输入状态
+        document.getElementById('chat-input').addEventListener('input', function() {
+            if (isMultiplayer && !isTyping && this.value.trim() !== '') {
+                isTyping = true;
+                // 这里应该发送"正在输入"状态给其他玩家
+                typingStatusChanged(true);
+            } else if (isMultiplayer && isTyping && this.value.trim() === '') {
+                isTyping = false;
+                typingStatusChanged(false);
+            }
+        });
+        
+        // function sendChatMessage() {
+        //     let input = document.getElementById('chat-input');
+        //     let message = input.value.trim();
+            
+        //     if (message) {
+        //         addChatMessage(playerName, message);
+        //         input.value = '';
+                
+        //         // 如果是多人游戏，模拟其他玩家回复
+        //         if (isMultiplayer) {
+        //             typingStatusChanged(false);
+                    
+        //             // 随机概率回复
+        //             if (Math.random() < 0.3) {
+        //                 setTimeout(() => {
+        //                     simulateOtherPlayerTyping();
+        //                 }, 1000 + Math.random() * 2000);
+        //             }
+        //         }
+        //     }
+        // }
+        
+        // function addChatMessage(sender, message) {
+        //     let chatBox = document.getElementById('chat-messages');
+        //     let messageElement = document.createElement('div');
+        //     messageElement.className = 'chat-message';
+            
+        //     // 系统消息使用绿色，其他玩家蓝色，自己红色
+        //     if (sender === '系统') {
+        //         messageElement.classList.add('text-green-400');
+        //     } else if (sender === playerName) {
+        //         messageElement.classList.add('text-red-400');
+        //     } else {
+        //         messageElement.classList.add('text-blue-400');
+        //     }
+            
+        //     messageElement.innerHTML = `<span class="font-bold">${sender}:</span> ${message}`;
+        //     chatBox.appendChild(messageElement);
+            
+        //     // 限制显示的聊天消息数量
+        //     if (chatBox.children.length > 50) {
+        //         chatBox.removeChild(chatBox.children[0]);
+        //     }
+            
+        //     chatBox.scrollTop = chatBox.scrollHeight;
+        // }
+
+        function sendChatMessage() {
+            let input = document.getElementById('chat-input');
+            let message = input.value.trim();
+            if (message) {
+                addChatMessage(playerName, message);
+                if (isMultiplayer && socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'chat', sender: playerName, message }));
+                }
+                input.value = '';
+            }
+        }
+
+        function addChatMessage(sender, message) {
+            let chatBox = document.getElementById('chat-messages');
+            let messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.classList.add(sender === '系统' ? 'text-green-400' : sender === playerName ? 'text-red-400' : 'text-blue-400');
+            messageElement.innerHTML = `<span class="font-bold">${sender}:</span> ${message}`;
+            chatBox.appendChild(messageElement);
+            if (chatBox.children.length > 50) chatBox.removeChild(chatBox.children[0]);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function typingStatusChanged(isTyping) {
+            if (isTyping) {
+                // 显示正在输入状态
+                document.getElementById('typing-indicator').classList.remove('hidden');
+            } else {
+                // 隐藏正在输入状态
+                document.getElementById('typing-indicator').classList.add('hidden');
+            }
+            
+            // 模拟其他玩家也正在输入
+            if (isMultiplayer && isTyping && Math.random() < 0.3) {
+                setTimeout(() => {
+                    simulateOtherPlayerTyping();
+                }, 1500);
+            }
+        }
+        
+        function simulateOtherPlayerTyping() {
+            if (!document.getElementById('typing-indicator').classList.contains('hidden')) {
+                return; // 如果已经有其他玩家在输入，就不再重复
+            }
+            
+            const activePlayers = Object.values(players).filter(p => p.name !== playerName);
+            if (activePlayers.length === 0) return;
+            
+            const typingPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+            
+            // 显示"某某正在输入"
+            document.getElementById('typing-indicator').classList.remove('hidden');
+            document.getElementById('typing-indicator').querySelector('span').textContent = `${typingPlayer.name}正在输入...`;
+            
+            // 随机时间后发送消息
+            setTimeout(() => {
+                document.getElementById('typing-indicator').classList.add('hidden');
+                
+                const replies = [
+                    '加油!', '我快赢了!', '这个游戏真有趣', '小心别撞墙', '我刚吃了个道具',
+                    '我的分数比你高哦', '一起玩真开心', '哈哈，你看到我的蛇了吗?', '我要超过你了!'
+                ];
+                const reply = replies[Math.floor(Math.random() * replies.length)];
+                
+                addChatMessage(typingPlayer.name, reply);
+                
+                // 随机概率继续对话
+                if (Math.random() < 0.4) {
+                    setTimeout(() => {
+                        simulateOtherPlayerTyping();
+                    }, 2000 + Math.random() * 3000);
+                }
+            }, 1500 + Math.random() * 3000);
+        }
+        
+
+        
+        // 多人游戏功能 (模拟)
+        function sendPlayerData(gameOver = false) {
+            // 在实际应用中，这里会发送数据到服务器
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        socket.send(JSON.stringify({
+            type: 'update',
+            snake: gameOver ? null : [...snake],
+            score: score,
+            name: playerName,
+            color: snakeHeadColor
+        }));            
+            
+            // // 我们只是模拟一下
+            // players[playerId] = {
+            //     name: playerName,
+            //     snake: gameOver ? null : [...snake],
+            //     score: score,
+            //     color: snakeHeadColor,
+            //     lastUpdate: Date.now()
+            // };
+            
+            // 清理不活跃的玩家
+            cleanupInactivePlayers();
+            
+            updatePlayerList();
+        }
+        
+        // 清理不活跃的玩家
+        function cleanupInactivePlayers() {
+            const now = Date.now();
+            const inactiveThreshold = 15000; // 15秒不活跃视为离线
+            const botThreshold = 30000; // 30秒不活跃的机器人会被移除
+            
+            for (let id in players) {
+                if (id.startsWith('bot-')) {
+                    // 机器人不活跃时间更长
+                    if (now - players[id].lastUpdate > botThreshold) {
+                        addChatMessage('系统', `${players[id].name} 由于不活跃被移出游戏`);
+                        delete players[id];
+                    }
+                } else if (id !== playerId && now - players[id].lastUpdate > inactiveThreshold) {
+                    addChatMessage('系统', `${players[id].name} 由于不活跃被移出游戏`);
+                    delete players[id];
+                }
+            }
+        }
+        
+        // function updatePlayerList() {
+        //     let playerList = document.getElementById('player-list');
+        //     playerList.innerHTML = '';
+            
+        //     let playerCount = 0;
+            
+        //     // 按分数排序
+        //     const sortedPlayers = Object.entries(players)
+        //         .filter(([id, player]) => player.snake) // 只统计活跃玩家
+        //         .sort((a, b) => b[1].score - a[1].score);
+            
+        //     // 显示最多50名玩家
+        //     const displayPlayers = sortedPlayers.slice(0, MAX_PLAYERS);
+            
+        //     for (let [id, player] of displayPlayers) {
+        //         playerCount++;
+                
+        //         let playerElement = document.createElement('div');
+        //         playerElement.className = 'flex items-center';
+                
+        //         let tagClass = id === playerId ? 'bg-red-500' : 
+        //                       id.startsWith('bot-') ? 'bg-purple-500' : 'bg-blue-500';
+                
+        //         playerElement.innerHTML = `
+        //             <span class="player-tag ${tagClass}">${id === playerId ? '你' : '玩家'}</span>
+        //             <span>${player.name}</span>
+        //             <span class="ml-auto text-xs">${player.score}分</span>
+        //         `;
+                
+        //         playerList.appendChild(playerElement);
+        //     }
+            
+        //     // 如果玩家超过显示限制，显示"还有X位玩家..."
+        //     if (sortedPlayers.length > MAX_PLAYERS) {
+        //         const remaining = sortedPlayers.length - MAX_PLAYERS;
+        //         let remainingElement = document.createElement('div');
+        //         remainingElement.className = 'text-center text-gray-400 text-xs py-2';
+        //         remainingElement.textContent = `还有${remaining}位玩家...`;
+        //         playerList.appendChild(remainingElement);
+        //     }
+            
+        //     document.getElementById('player-count').textContent = sortedPlayers.length || 1;
+        // }
+        // 更新玩家列表
+        function updatePlayerList() {
+            let playerList = document.getElementById('player-list');
+            playerList.innerHTML = '';
+            const sortedPlayers = Object.entries(players)
+                .filter(([_, player]) => player.snake)
+                .sort((a, b) => b[1].score - a[1].score)
+                .slice(0, MAX_PLAYERS);
+            sortedPlayers.forEach(([id, player]) => {
+                let playerElement = document.createElement('div');
+                playerElement.className = 'flex items-center';
+                let tagClass = id === playerId ? 'bg-red-500' : 'bg-blue-500';
+                playerElement.innerHTML = `
+                    <span class="player-tag ${tagClass}">${id === playerId ? '你' : '玩家'}</span>
+                    <span>${player.name}</span>
+                    <span class="ml-auto text-xs">${player.score}分</span>
+                `;
+                playerList.appendChild(playerElement);
+            });
+            document.getElementById('player-count').textContent = sortedPlayers.length || 1;
+        }
+        
+        // 商店购买功能
+        document.querySelectorAll('.buy-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                let itemId = this.dataset.id;
+                let price = parseInt(this.dataset.price);
+                
+                if (coins >= price) {
+                    coins -= price;
+                    updateCoins();
+                    
+                    // 添加物品到物品栏
+                    if (itemId.startsWith('skin-')) {
+                        if (!inventory.skins.includes(itemId)) {
+                            inventory.skins.push(itemId);
+                        }
+                    } else if (itemId.startsWith('powerup-') || itemId.startsWith('item-')) {
+                        if (!inventory.items[itemId]) {
+                            inventory.items[itemId] = 0;
+                        }
+                        inventory.items[itemId]++;
+                    }
+                    
+                    // 保存物品栏
+                    localStorage.setItem('snakeInventory', JSON.stringify(inventory));
+                    
+                    // 更新商店显示
+                    updateShopItems();
+                    
+                    // 显示购买成功消息
+                    let itemName = this.closest('.shop-item').querySelector('h3').textContent;
+                    addChatMessage('系统', `成功购买 ${itemName}!`);
+                    
+                    // 如果是改名卡，直接弹出提示
+                    if (itemId === 'item-name') {
+                        let newName = document.getElementById('name-input').value.trim();
+                        if (newName) {
+                            playerName = newName;
+                            addChatMessage('系统', `你的名字已更改为 ${playerName}!`);
+                        }
+                    }
+                } else {
+                    addChatMessage('系统', '金币不足，无法购买!');
+                }
+            });
+        });
+        
+        // 物品栏使用物品功能
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('select-skin-btn')) {
+                let skinId = e.target.dataset.id;
+                inventory.selectedSkin = skinId;
+                localStorage.setItem('snakeInventory', JSON.stringify(inventory));
+                
+                // 更新按钮状态
+                document.querySelectorAll('.select-skin-btn').forEach(btn => {
+                    if (btn.dataset.id === skinId) {
+                        btn.innerHTML = '<i class="fas fa-check mr-1"></i>已使用';
+                        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                        btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    } else {
+                        btn.innerHTML = '使用此皮肤';
+                        btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    }
+                });
+                
+                // 应用皮肤
+                applySelectedSkin();
+                drawGame();
+
+                addChatMessage('系统', `已切换皮肤为 ${e.target.closest('.bg-gray-800').querySelector('h3').textContent}!`);
+            }
+            
+            if (e.target.classList.contains('use-item-btn') && !e.target.disabled) {
+                let itemId = e.target.dataset.id;
+                
+                if (inventory.items[itemId] > 0) {
+                    inventory.items[itemId]--;
+                    localStorage.setItem('snakeInventory', JSON.stringify(inventory));
+                    
+                    // 更新物品栏显示
+                    updateInventoryItems();
+                    
+                    // 使用道具效果
+                    let itemName = e.target.closest('.bg-gray-800').querySelector('h3').textContent;
+                    addChatMessage('系统', `已使用 ${itemName}!`);
+                    
+                    if (itemId === 'powerup-speed') {
+                        gameSpeed = Math.max(50, gameSpeed - 20); // 加速
+                        setTimeout(() => {
+                            gameSpeed = 150; // 10秒后恢复
+                        }, 10000);
+                    } else if (itemId === 'powerup-shield') {
+                        // 这里可以添加护盾效果
+                    }
+                }
+            }
+        });
+        
+        // 关闭广告
+        document.querySelectorAll('.ad-close').forEach(button => {
+            button.addEventListener('click', function() {
+                // 增加金币作为观看广告的奖励
+                coins += 10;
+                updateCoins();
+                
+                this.parentElement.style.display = 'none';
+                addChatMessage('系统', '感谢观看广告! 获得10金币奖励!');
+            });
+        });
+        
+        // 广告双倍金币
+        document.getElementById('watch-ad-btn').addEventListener('click', function() {
+            let earnedCoins = Math.floor(score / 2);
+            coins += earnedCoins; // 获得双倍金币
+            updateCoins();
+            
+            document.getElementById('earned-coins').textContent = earnedCoins * 2;
+            document.getElementById('game-over-modal').style.display = 'none';
+            
+            addChatMessage('系统', `观看广告获得双倍 ${earnedCoins * 2} 金币奖励!`);
+        });
+        
+        // 分享按钮
+        document.getElementById('share-btn').addEventListener('click', function() {
+            let shareText = `我在贪吃蛇游戏中获得了 ${score} 分! 你能打败我吗?`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Multiplayer Snake Game Online Free - Play Now!',
+                    text: shareText,
+                    url: window.location.href
+                }).catch(err => {
+                    console.log('分享失败:', err);
+                    prompt('复制以下内容分享给你的朋友:', shareText);
+                });
+            } else {
+                prompt('复制以下内容分享给你的朋友:', shareText);
+            }
+        });
+        
+        // 刷新商店
+        document.getElementById('refresh-shop').addEventListener('click', function() {
+            addChatMessage('系统', '商店商品已刷新!');
+            this.classList.add('animate-spin');
+            setTimeout(() => {
+                this.classList.remove('animate-spin');
+            }, 1000);
+        });
+        
+        // 初始化
+        document.getElementById('high-score').textContent = highScore;
+        document.getElementById('coins').textContent = coins;
+        updateShopItems();
+        drawGame();
+        
+        // 定期清理不活跃玩家
+        setInterval(() => {
+            if (isMultiplayer) {
+                cleanupInactivePlayers();
+                updatePlayerList();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

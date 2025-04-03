@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Snake Game</title>
+    ...
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <i class="fas fa-gamepad text-2xl text-red-500 mr-2"></i>
+            <h1 class="text-xl font-bold">Multiplayer Snake Game</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+                <i class="fas fa-coins text-yellow-400 mr-1"></i>
+                <span id="coins">0</span>
+            </div>
+            <button id="shop-btn" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded">
+                <i class="fas fa-shopping-cart mr-1"></i>Shop
+            </button>
+            <button id="leaderboard-btn" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded">
+                <i class="fas fa-trophy mr-1"></i>Leaderboard
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 flex flex-col lg:flex-row">
+        <!-- Game Area -->
+        <div class="lg:w-3/4 lg:pr-4 mb-8 lg:mb-0">
+            <div class="game-container mx-auto">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+            </div>
+            
+            <!-- Game Controls -->
+            <div class="mt-4 flex justify-center space-x-4">
+                <button id="start-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-play mr-2"></i>Start Game
+                </button>
+                <button id="pause-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg" disabled>
+                    <i class="fas fa-pause mr-2"></i>Pause
+                </button>
+                <button id="multiplayer-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-users mr-2"></i>Multiplayer
+                </button>
+            </div>
+            
+            <!-- Game Status -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Current Score</h3>
+                    <p id="score" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">High Score</h3>
+                    <p id="high-score" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Online Players</h3>
+                    <p id="player-count" class="text-2xl font-bold">1</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-sm text-gray-400 mb-2">Current Speed</h3>
+                    <p id="speed" class="text-2xl font-bold">150</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <!-- Ad Slot 1 -->
+            <div class="ad-container mb-6">
+                <button class="ad-close">&times;</button>
+                <h3 class="text-center mb-2 text-sm">Sponsored Ad</h3>
+                <div class="flex justify-center">
+                    <img src="https://via.placeholder.com/250x100?text=Game+Ad+Slot" alt="Ad" class="rounded">
+                </div>
+                <p class="text-xs mt-2 text-center">Click the ad to support us</p>
+            </div>
+            
+            <!-- Player List -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-sm text-gray-400 mb-3">Player List</h3>
+                <div id="player-list" class="player-list-container space-y-2">
+                    <div class="flex items-center">
+                        <span class="player-tag bg-red-500">You</span>
+                        <span>Player 1</span>
+                        <span class="ml-auto text-xs">0 pts</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chatroom -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-sm text-gray-400 mb-3">Game Chatroom</h3>
+                <div id="chat-messages" class="h-40 overflow-y-auto mb-3 text-xs space-y-2">
+                    <div class="chat-message text-green-400">System: Welcome to Multiplayer Snake Game!</div>
+                </div>
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="typing-indicator hidden">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="ml-2">Other players are typing...</span>
+                </div>
+                <div class="flex">
+                    <input type="text" id="chat-input" class="flex-grow bg-gray-700 text-white px-2 py-1 rounded-l text-xs" placeholder="Enter message...">
+                    <button id="chat-send" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-r text-xs">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ad Slot 2 -->
+            <div class="ad-container">
+                <button class="ad-close">&times;</button>
+                <h3 class="text-center mb-2 text-sm">Recommended Game</h3>
+                <div class="flex justify-center">
+                    <img src="https://via.placeholder.com/250x150?text=Recommended+Game+Ad" alt="Ad" class="rounded">
+                </div>
+                <p class="text-xs mt-2 text-center">Click to learn more</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white text-center py-4 text-xs">
+        <p>© 2023 Multiplayer Snake Game | Ad revenue supports server maintenance</p>
+        <p class="mt-1">Built with HTML5, CSS3, and JavaScript</p>
+    </footer>
+</body>
+</html>
