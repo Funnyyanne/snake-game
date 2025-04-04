@@ -32,6 +32,7 @@ wss.on('connection', (ws, req) => {
             foods: [],
             powerUps: []
         };
+        spawnFood(roomId); // 立即生成食物
     }
 
     const playerId = 'player-' + Math.random().toString(36).substr(2, 9);
