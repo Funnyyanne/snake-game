@@ -1,5 +1,19 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+
+// 创建 Express 应用
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 创建 HTTP 服务器
+const server = app.listen(8080, () => {
+    console.log('Server running on http://0.0.0.0:8080');
+});
+
+// 创建 WebSocket 服务器
+const wss = new WebSocket.Server({ server });
+
+// const path = require('path');
+
 
 let rooms = {}; // 存储多个房间的数据
 
@@ -57,7 +71,8 @@ wss.on('connection', (ws, req) => {
 
 function broadcast(roomId, data) {
     wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN && client.roomId === roomId) {
+        if (client.readyState === WebSocket.OPEN ) {
+            //&& client.roomId === roomId
             client.send(JSON.stringify(data));
         }
     });

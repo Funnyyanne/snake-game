@@ -659,7 +659,7 @@
         // WebSocket 连接
         function connectToServer(newRoomId) {
             roomId = newRoomId;
-            socket = new WebSocket(`ws://localhost:8080?room=${roomId}`);
+            socket = new WebSocket(`wss://game-server.onrender.com?room=${roomId}`);
 
             socket.onopen = () => {
                 addChatMessage('系统', `已连接到房间 ${roomId}`);
