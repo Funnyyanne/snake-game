@@ -2,18 +2,19 @@ const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
 
+
 // 创建 Express 应用
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 创建 HTTP 服务器
 const port = process.env.PORT || 8080;
-const server = app.listen(8080, () => {
+const server = app.listen(port, () => {
     console.log('Server running on http://0.0.0.0:${port}');
 });
 
 // 创建 WebSocket 服务器
-const wss = new WebSocwssket.Server({ server });
+const wss = new WebSocket.Server({ server });
 
 
 
@@ -23,7 +24,8 @@ wss.on('connection', (ws, req) => {
     // 从 URL 查询参数中获取房间 ID，默认加入 "default" 房间
     const urlParams = new URLSearchParams(req.url.split('?')[1]);
     const roomId = urlParams.get('room') || 'default';
-
+    ws.roomId = roomId; // 为 WebSocket 客户端添加 roomId 属性
+    
     if (!rooms[roomId]) {
         rooms[roomId] = {
             players: {},
