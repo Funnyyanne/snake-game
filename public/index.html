@@ -708,7 +708,8 @@
             for (let i = 3; i >= 0; i--) {
                 snake.push({ x: i, y: 0 });
             }
-            
+            foods = [];
+            powerUps = [];
             spawnFood();
             spawnPowerUp();
             
@@ -755,25 +756,18 @@
         
         // 生成食物
         function spawnFood() {
-            // foods = {
-            //     x: Math.floor(Math.random() * tileCount),
-            //     y: Math.floor(Math.random() * tileCount),
-            //     hasAd: Math.random() < 0.5 // 50% 概率生成广告
-            // };
-            
-            // // 确保食物不会生成在蛇身上
-            // for (let segment of snake) {
-            //     if (segment.x === foods.x && segment.y === foods.y) {
-            //         return spawnFood();
-            //     }
-            // }
-            
             const newFood = {
                 x: Math.floor(Math.random() * tileCount),
                 y: Math.floor(Math.random() * tileCount),
                 hasAd: Math.random() < 0.5
             };
-            foods.push(newFood);
+            // 确保食物不会生成在蛇身上
+            for (let segment of snake) {
+                if (segment.x === newFood.x && segment.y === newFood.y) {
+                    return spawnFood();
+                }
+            }
+            foods = [newFood]; // 保持单个食物
         }
         
         // 本地生成道具（单人模式）
@@ -792,6 +786,13 @@
                         return spawnPowerUp();
                     }
                 }
+                for (let food of foods) {
+                    if (food.x === newPowerUp.x && food.y === newPowerUp.y) {
+                        return spawnPowerUp();
+                    }
+                }
+                
+                powerUps = [newPowerUp];
             } else {
                 powerUps = [];
             }
@@ -948,6 +949,11 @@
         
         // 绘制游戏
         function drawGame() {
+            console.log('Drawing game:', {
+                snake: snake,
+                foods: foods,
+                powerUps: powerUps
+            });
             // 清空画布
             ctx.fillStyle = '#16213e';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1263,7 +1269,7 @@
         updatePlayerList();
     }
 });
-    }
+    
         
         // 更新本地排行榜数据
         function updateLocalLeaderboard(newScore) {
