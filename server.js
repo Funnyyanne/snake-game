@@ -7,12 +7,13 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 创建 HTTP 服务器
+const port = process.env.PORT || 8080;
 const server = app.listen(8080, () => {
-    console.log('Server running on http://0.0.0.0:8080');
+    console.log('Server running on http://0.0.0.0:${port}');
 });
 
 // 创建 WebSocket 服务器
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocwssket.Server({ server });
 
 
 
@@ -72,8 +73,7 @@ wss.on('connection', (ws, req) => {
 
 function broadcast(roomId, data) {
     wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN ) {
-            //&& client.roomId === roomId
+        if (client.readyState === WebSocket.OPEN && client.roomId === roomId) {
             client.send(JSON.stringify(data));
         }
     });

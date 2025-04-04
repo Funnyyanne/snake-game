@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="description" content="Enjoy a free AI-powered multiplayer snake game with skins and chat. Play online with friends now!">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/output.css" rel="stylesheet">
+    <script src="/js/fontawesome.js"></script>
     <title>Multiplayer Snake Game Online Free - Play Now!</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -43,7 +43,7 @@
             border-radius: 30%;
         }
         
-        .food {
+        .foods {
             background-color: #f9b208;
             border-radius: 50%;
             animation: pulse 1s infinite;
@@ -755,7 +755,7 @@
         
         // 生成食物
         function spawnFood() {
-            // food = {
+            // foods = {
             //     x: Math.floor(Math.random() * tileCount),
             //     y: Math.floor(Math.random() * tileCount),
             //     hasAd: Math.random() < 0.5 // 50% 概率生成广告
@@ -763,7 +763,7 @@
             
             // // 确保食物不会生成在蛇身上
             // for (let segment of snake) {
-            //     if (segment.x === food.x && segment.y === food.y) {
+            //     if (segment.x === foods.x && segment.y === foods.y) {
             //         return spawnFood();
             //     }
             // }
@@ -787,7 +787,7 @@
                 // 确保道具不会生成在蛇身上或食物上
                 for (let segment of snake) {
                     if ((segment.x === powerUps.x && segment.y === powerUps.y) || 
-                        (food.x === powerUps.x && food.y === powerUps.y)) {
+                        (foods.x === powerUps.x && foods.y === powerUps.y)) {
                         return spawnPowerUp();
                     }
                 }
@@ -890,11 +890,11 @@
             }
 
             // 检查是否吃到食物
-            // if (head.x === food.x && head.y === food.y) {
+            // if (head.x === foods.x && head.y === foods.y) {
             //     score += 10;
                 
             //     // 如果有广告，增加额外奖励
-            //     if (food.hasAd) {
+            //     if (foods.hasAd) {
             //         score += 5; // 额外5分
             //         coins += 5; // 额外5金币
             //         updateCoins();
@@ -1028,43 +1028,65 @@
             ctx.fillStyle = '#f9b208';
             ctx.beginPath();
             ctx.arc(
-                food.x * gridSize + gridSize / 2,
-                food.y * gridSize + gridSize / 2,
+                foods.x * gridSize + gridSize / 2,
+                foods.y * gridSize + gridSize / 2,
                 gridSize / 2 - 2,
                 0,
                 Math.PI * 2
             );
             ctx.fill();
 
-            if (food.hasAd) {
+            if (foods.hasAd) {
                 ctx.fillStyle = 'white';
                 ctx.font = '10px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('广告', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2 + 4);
+                ctx.fillText('广告', foods.x * gridSize + gridSize / 2, foods.y * gridSize + gridSize / 2 + 4);
             }
             
             // 绘制能量道具
-            if (powerUps) {
-                ctx.fillStyle = powerUps.type === 'speed' ? '#00b4d8' : '#38b000';
+            // if (powerUps) {
+            //     ctx.fillStyle = powerUps.type === 'speed' ? '#00b4d8' : '#38b000';
+            //     ctx.beginPath();
+            //     ctx.arc(
+            //         powerUps.x * gridSize + gridSize / 2,
+            //         powerUps.y * gridSize + gridSize / 2,
+            //         gridSize / 2 - 2,
+            //         0,
+            //         Math.PI * 2
+            //     );
+            //     ctx.fill();
+                
+            //     // 绘制图标
+            //     ctx.fillStyle = 'white';
+            //     ctx.font = '12px Arial';
+            //     ctx.textAlign = 'center';
+            //     ctx.textBaseline = 'middle';
+            //     ctx.fillText(
+            //         powerUps.type === 'speed' ? '⚡' : '🛡️',
+            //         powerUps.x * gridSize + gridSize / 2,
+            //         powerUps.y * gridSize + gridSize / 2
+            //     );
+            // }
+            for (let powerUp of powerUps) {
+                ctx.fillStyle = powerUp.type === 'speed' ? '#00b4d8' : '#38b000';
                 ctx.beginPath();
                 ctx.arc(
-                    powerUps.x * gridSize + gridSize / 2,
-                    powerUps.y * gridSize + gridSize / 2,
+                    powerUp.x * gridSize + gridSize / 2,
+                    powerUp.y * gridSize + gridSize / 2,
                     gridSize / 2 - 2,
                     0,
                     Math.PI * 2
                 );
                 ctx.fill();
                 
-                // 绘制图标
                 ctx.fillStyle = 'white';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(
-                    powerUps.type === 'speed' ? '⚡' : '🛡️',
-                    powerUps.x * gridSize + gridSize / 2,
-                    powerUps.y * gridSize + gridSize / 2
+                    powerUp.type === 'speed' ? '⚡' : '🛡️',
+                    powerUp.x * gridSize + gridSize / 2,
+                    powerUp.y * gridSize + gridSize / 2
                 );
             }
             
@@ -1117,7 +1139,11 @@
         }
 
         // 发送玩家数据
+        let lastSent = 0;
         function sendPlayerData(gameOver = false) {
+            const now = Date.now();
+            if (now - lastSent < 200) return; // 每500ms发送一次
+            lastSent = now;
             if (!socket || socket.readyState !== WebSocket.OPEN) return;
             socket.send(JSON.stringify({
                 type: 'update',
@@ -1186,7 +1212,7 @@
         }
 
         function connectToServer() {
-        socket = new WebSocket('ws://localhost:8080');
+        socket = new WebSocket('wss://snake-game-ws.onrender.com?room=${roomId}');
         
         socket.onopen = () => {
             addChatMessage('系统', '已连接到多人游戏服务器');
@@ -2005,7 +2031,8 @@
             let messageElement = document.createElement('div');
             messageElement.className = 'chat-message';
             messageElement.classList.add(sender === '系统' ? 'text-green-400' : sender === playerName ? 'text-red-400' : 'text-blue-400');
-            messageElement.innerHTML = `<span class="font-bold">${sender}:</span> ${message}`;
+            const escapedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            messageElement.innerHTML = `<span class="font-bold">${sender}:</span> ${escapedMessage}`;
             chatBox.appendChild(messageElement);
             if (chatBox.children.length > 50) chatBox.removeChild(chatBox.children[0]);
             chatBox.scrollTop = chatBox.scrollHeight;

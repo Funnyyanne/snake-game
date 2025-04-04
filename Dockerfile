@@ -1,5 +1,5 @@
 # 使用 Node.js 基础镜像
-FROM node:20
+FROM node:18
 
 # 设置工作目录
 WORKDIR /app
@@ -15,6 +15,7 @@ RUN npm install
 # 复制项目文件
 COPY . .
 
+RUN npm run build:css
 
 # 暴露 WebSocket 端口
 EXPOSE 8080
