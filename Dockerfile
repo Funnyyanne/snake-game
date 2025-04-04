@@ -12,7 +12,6 @@ RUN npm install
 
 # 复制项目文件
 COPY . .
-COPY sw.js 
 
 RUN npm run build:css
 
