@@ -25,7 +25,7 @@ wss.on('connection', (ws, req) => {
     const urlParams = new URLSearchParams(req.url.split('?')[1]);
     const roomId = urlParams.get('room') || 'default';
     ws.roomId = roomId; // 为 WebSocket 客户端添加 roomId 属性
-    
+
     if (!rooms[roomId]) {
         rooms[roomId] = {
             players: {},
@@ -74,6 +74,7 @@ wss.on('connection', (ws, req) => {
 });
 
 function broadcast(roomId, data) {
+    console.log(`Broadcasting to room ${roomId}:`, data.type);
     wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN && client.roomId === roomId) {
             client.send(JSON.stringify(data));
