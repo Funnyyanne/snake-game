@@ -1,4 +1,6 @@
 const WebSocket = require('ws');
+const express = require('express');
+const path = require('path');
 
 // 创建 Express 应用
 const app = express();
@@ -12,7 +14,6 @@ const server = app.listen(8080, () => {
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ server });
 
-// const path = require('path');
 
 
 let rooms = {}; // 存储多个房间的数据
