@@ -659,7 +659,7 @@
         // WebSocket 连接
         function connectToServer(newRoomId) {
             roomId = newRoomId;
-            socket = new WebSocket(`wss://snake-game-l99p.onrender.com?room=${roomId}`);
+            socket = new WebSocket(`wss://snake-game-ws.onrender.com?room=${roomId}`);
 
             socket.onerror = (error) => {
                 console.error('WebSocket连接错误:', error);
@@ -955,10 +955,11 @@
             if (isMultiplayer) sendPlayerData();
         }
         
-        function restartGameLoop() {
-            clearInterval(gameLoop);
-            gameLoop = setInterval(gameUpdate, gameSpeed);
-        }
+        //Todo 测试完删除
+        // function restartGameLoop() {
+        //     clearInterval(gameLoop);
+        //     gameLoop = setInterval(gameUpdate, gameSpeed);
+        // }
         
         // 绘制游戏
         function drawGame() {
@@ -1226,54 +1227,55 @@
                 sendPlayerData(true);
                 addChatMessage('系统', `${playerName} 游戏结束! 得分: ${score}`);
             }
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
         }
 
-        function connectToServer() {
-        socket = new WebSocket('wss://snake-game-ws.onrender.com?room=${roomId}');
-        
-        socket.onopen = () => {
-            addChatMessage('系统', '已连接到多人游戏服务器');
-            sendPlayerData(); // 发送初始数据
-        };
+//         function connectToServer() {
+//         socket = new WebSocket(`wss://snake-game-ws.onrender.com?room=${roomId}`);
+//         socket.onopen = () => {
+//             addChatMessage('系统', '已连接到多人游戏服务器');
+//             sendPlayerData(); // 发送初始数据
+//         };
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'init') {
-                playerId = data.playerId;
-            } else if (data.type === 'players') {
-                players = data.data;
-                updatePlayerList();
-                drawGame();
-            } else if (data.type === 'chat') {
-                addChatMessage(data.sender, data.message);
-            }
-        };
+//         socket.onmessage = (event) => {
+//             const data = JSON.parse(event.data);
+//             if (data.type === 'init') {
+//                 playerId = data.playerId;
+//             } else if (data.type === 'players') {
+//                 players = data.data;
+//                 updatePlayerList();
+//                 drawGame();
+//             } else if (data.type === 'chat') {
+//                 addChatMessage(data.sender, data.message);
+//             }
+//         };
 
-        socket.onclose = () => {
-            addChatMessage('系统', '与服务器断开连接');
-            isMultiplayer = false;
-            document.getElementById('multiplayer-btn').innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
-            document.getElementById('multiplayer-btn').classList.remove('bg-purple-600');
-            document.getElementById('multiplayer-btn').classList.add('bg-blue-600');
-        };
+//         socket.onclose = () => {
+//             addChatMessage('系统', '与服务器断开连接');
+//             isMultiplayer = false;
+//             document.getElementById('multiplayer-btn').innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+//             document.getElementById('multiplayer-btn').classList.remove('bg-purple-600');
+//             document.getElementById('multiplayer-btn').classList.add('bg-blue-600');
+//         };
         
-        document.getElementById('multiplayer-btn').addEventListener('click', function() {
-    isMultiplayer = !isMultiplayer;
-    if (isMultiplayer) {
-        this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
-        this.classList.remove('bg-blue-600');
-        this.classList.add('bg-purple-600');
-        connectToServer();
-    } else {
-        this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
-        this.classList.remove('bg-purple-600');
-        this.classList.add('bg-blue-600');
-        if (socket) socket.close();
-        players = {};
-        updatePlayerList();
-    }
-});
-    }
+//             document.getElementById('multiplayer-btn').addEventListener('click', function() {
+//             isMultiplayer = !isMultiplayer;
+//             if (isMultiplayer) {
+//                 this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
+//                 this.classList.remove('bg-blue-600');
+//                 this.classList.add('bg-purple-600');
+//                 connectToServer();
+//             } else {
+//                 this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+//                 this.classList.remove('bg-purple-600');
+//                 this.classList.add('bg-blue-600');
+//                 if (socket) socket.close();
+//                 players = {};
+//                 updatePlayerList();
+//             }
+// });
+//     }
         
         // 更新本地排行榜数据
         function updateLocalLeaderboard(newScore) {
@@ -1351,21 +1353,23 @@
             document.getElementById('start-btn').disabled = true;
             document.getElementById('pause-btn').disabled = false;
 
-            restartGameLoop();
-            requestAnimationFrame(gameLoop);
+            // restartGameLoop();
+            // requestAnimationFrame(gameLoop);
             if (!isMultiplayer) {
                 foods = [];
                 powerUps = [];
                 spawnFood();
                 spawnPowerUp();
             }
+            gameLoop();//直接启动游戏循环
         }
 
         // 游戏循环
         function gameLoop() {
             if (gameRunning && !gamePaused) {
                 gameUpdate();
-                setTimeout(() => requestAnimationFrame(gameLoop), gameSpeed);
+                gameLoopId = requestAnimationFrame(gameLoop); // 使用 requestAnimationFrame
+                // setTimeout(() => requestAnimationFrame(gameLoop), gameSpeed);
             }
         }
         
@@ -1376,11 +1380,10 @@
             gamePaused = !gamePaused;
             
             if (gamePaused) {
-                clearInterval(gameLoop);
                 document.getElementById('pause-btn').innerHTML = '<i class="fas fa-play mr-2"></i>继续';
             } else {
-                gameLoop = setInterval(gameUpdate, gameSpeed);
                 document.getElementById('pause-btn').innerHTML = '<i class="fas fa-pause mr-2"></i>暂停';
+                gameLoop(); // 恢复游戏循环
             }
         }
         
