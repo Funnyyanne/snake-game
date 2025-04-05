@@ -1,40 +1,19 @@
-const WebSocket = require('ws');
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 
-
-// 创建 Express 应用
 const app = express();
-// app.set('trust proxy', true);
-// app.use((req, res, next) => {
-//     res.setHeader('Access-Control-Allow-Origin', '*');
-//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-//     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-//     next();
-// });
+const server = http.createServer(app);
+const io = new Server(server);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
+let rooms = {};
 
-// app.use('/static', express.static('static'))
-
-// 创建 HTTP 服务器
-const server = app.listen(80, () => {
-    console.log(`Amazing snake-game Method™ server on 80`);
-});
-
-
-// 创建 WebSocket 服务器
-const wss = new WebSocket.Server({ server });
-
-
-
-let rooms = {}; // 存储多个房间的数据
-
-wss.on('connection', (ws, req) => {
-    // 从 URL 查询参数中获取房间 ID，默认加入 "default" 房间
-    const urlParams = new URLSearchParams(req.url.split('?')[1]);
-    const roomId = urlParams.get('room') || 'default';
-    ws.roomId = roomId; // 为 WebSocket 客户端添加 roomId 属性
+io.on('connection', (socket) => {
+    const roomId = socket.handshake.query.room || 'default';
+    socket.join(roomId);
 
     if (!rooms[roomId]) {
         rooms[roomId] = {
@@ -42,68 +21,81 @@ wss.on('connection', (ws, req) => {
             foods: [],
             powerUps: []
         };
-        spawnFood(roomId); // 立即生成食物
-        spawnPowerUp(roomId); // 立即生成道具
+        spawnFood(roomId);
+        spawnPowerUp(roomId);
     }
 
     const playerId = 'player-' + Math.random().toString(36).substr(2, 9);
     console.log(`New player ${playerId} connected to room ${roomId}`);
 
-    // 发送玩家 ID 和初始房间数据
-    ws.send(JSON.stringify({ type: 'init', playerId, roomId, data: rooms[roomId] }));
+    socket.emit('init', { playerId, roomId, data: rooms[roomId] });
 
-    ws.on('message', (message) => {
-        const data = JSON.parse(message);
-        if (data.type === 'update') {
-            rooms[roomId].players[playerId] = {
-                snake: data.snake,
-                score: data.score,
-                name: data.name,
-                color: data.color,
-                lastUpdate: Date.now()
-            };
-            broadcast(roomId, { type: 'players', data: rooms[roomId].players });
-        } else if (data.type === 'chat') {
-            broadcast(roomId, { type: 'chat', sender: data.sender, message: data.message });
-        } else if (data.type === 'foodEaten') {
-            // 玩家吃到食物，服务器重新生成
-            rooms[roomId].foods = rooms[roomId].foods.filter(f => !(f.x === data.x && f.y === data.y));
-            spawnFood(roomId);
-        } else if (data.type === 'powerUpEaten') {
-            rooms[roomId].powerUps = rooms[roomId].powerUps.filter(p => !(p.x === data.x && p.y === data.y));
-            spawnPowerUp(roomId);
+    socket.on('update', (data) => {
+        rooms[roomId].players[playerId] = {
+            snake: data.snake,
+            score: data.score,
+            name: data.name,
+            color: data.color,
+            lastUpdate: Date.now()
+        };
+
+        if (rooms[roomId] && rooms[roomId].players[playerId]) {
+            rooms[roomId].players[playerId] = data;
+            io.to(roomId).emit('players', rooms[roomId].players);
+        }
+        });
+
+    socket.on('chat', (data) => {
+        io.to(roomId).emit('chat', { sender: data.sender, message: data.message });
+    });
+
+    // 处理客户端主动离开
+    socket.on('leave', (data) => {
+        if (rooms[data.roomId] && rooms[data.roomId].players[data.playerId]) {
+            delete rooms[data.roomId].players[data.playerId];
+            io.to(data.roomId).emit('players', rooms[data.roomId].players);
+            console.log(`玩家 ${data.playerId} 已从房间 ${data.roomId} 离开`);
         }
     });
 
-    ws.on('close', () => {
+    // 处理客户端断开连接
+    socket.on('disconnect', () => {
+        if (rooms[roomId] && rooms[roomId].players[playerId]) {
+            delete rooms[roomId].players[playerId];
+            io.to(roomId).emit('players', rooms[roomId].players);
+            console.log(`玩家 ${playerId} 已断开连接并从房间 ${roomId} 移除`);
+        }
+    });
+
+    socket.on('foodEaten', (data) => {
+        rooms[roomId].foods = rooms[roomId].foods.filter(f => !(f.x === data.x && f.y === data.y));
+        spawnFood(roomId);
+    });
+
+    socket.on('powerUpEaten', (data) => {
+        rooms[roomId].powerUps = rooms[roomId].powerUps.filter(p => !(p.x === data.x && p.y === data.y));
+        spawnPowerUp(roomId);
+    });
+
+    socket.on('disconnect', () => {
         delete rooms[roomId].players[playerId];
-        broadcast(roomId, { type: 'players', data: rooms[roomId].players });
+        io.to(roomId).emit('players', rooms[roomId].players);
         console.log(`Player ${playerId} disconnected from room ${roomId}`);
         if (Object.keys(rooms[roomId].players).length === 0) {
-            delete rooms[roomId]; // 清理空房间
+            delete rooms[roomId];
         }
     });
 });
 
-function broadcast(roomId, data) {
-    console.log(`Broadcasting to room ${roomId}:`, data.type);
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN && client.roomId === roomId) {
-            client.send(JSON.stringify(data));
-        }
-    });
-}
-
 function spawnFood(roomId) {
-    const tileCount = 40; // 与客户端一致
+    const tileCount = 40;
     const newFood = {
         x: Math.floor(Math.random() * tileCount),
         y: Math.floor(Math.random() * tileCount),
         hasAd: Math.random() < 0.5
     };
     rooms[roomId].foods.push(newFood);
-    console.log(`Spawned food in room ${roomId}:`, newFood);
-    broadcast(roomId, { type: 'foods', data: rooms[roomId].foods });
+    io.to(roomId).emit('foods', rooms[roomId].foods);
 }
 
 function spawnPowerUp(roomId) {
@@ -118,18 +110,16 @@ function spawnPowerUp(roomId) {
     } else {
         rooms[roomId].powerUps = [];
     }
-    console.log(`Spawned powerUp in room ${roomId}:`, rooms[roomId].powerUps);
-    broadcast(roomId, { type: 'powerUps', data: rooms[roomId].powerUps });
+    io.to(roomId).emit('powerUps', rooms[roomId].powerUps);
 }
 
-// 定期清理不活跃玩家和初始化食物/道具
 setInterval(() => {
     for (let roomId in rooms) {
         const now = Date.now();
         for (let id in rooms[roomId].players) {
             if (now - rooms[roomId].players[id].lastUpdate > 15000) {
                 delete rooms[roomId].players[id];
-                broadcast(roomId, { type: 'players', data: rooms[roomId].players });
+                io.to(roomId).emit('players', rooms[roomId].players);
             }
         }
         if (rooms[roomId].foods.length === 0) spawnFood(roomId);
@@ -137,3 +127,8 @@ setInterval(() => {
     }
 }, 5000);
 
+
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
