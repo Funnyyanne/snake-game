@@ -22,14 +22,6 @@ const server = app.listen(80, () => {
     console.log(`Amazing snake-game Method™ server on 80`);
 });
 
-var http = require('http').createServer(app);
-
-http.listen(process.env.PORT || 3000, function() {
-    var host = http.address().address
-    var port = http.address().port
-    console.log('App listening at http://%s:%s', host, port)
-  });
-
 
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ server });
@@ -145,4 +137,3 @@ setInterval(() => {
     }
 }, 5000);
 
-console.log('WebSocket server running on ws://localhost:8080');
