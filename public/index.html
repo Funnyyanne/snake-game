@@ -659,8 +659,16 @@
         // WebSocket 连接
         function connectToServer(newRoomId) {
             roomId = newRoomId;
-            socket = new WebSocket(`wss://game-server.onrender.com?room=${roomId}`);
+            socket = new WebSocket(`wss://snake-game-l99p.onrender.com?room=${roomId}`);
 
+            socket.onerror = (error) => {
+            console.error('WebSocket连接错误:', error);
+            addChatMessage('系统', '连接服务器失败，请稍后再试');
+            isMultiplayer = false;
+            document.getElementById('multiplayer-btn').innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
+            document.getElementById('multiplayer-btn').classList.remove('bg-purple-600');
+            document.getElementById('multiplayer-btn').classList.add('bg-blue-600');
+        };
             socket.onopen = () => {
                 addChatMessage('系统', `已连接到房间 ${roomId}`);
                 sendPlayerData();
