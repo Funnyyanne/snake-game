@@ -22,4 +22,4 @@
     numInstances: 1
     envVars:
       - key: PORT
-        value: 8080
+        value: 80

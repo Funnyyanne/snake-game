@@ -655,14 +655,15 @@
         let chatActivity = {};
         let snakeHeadColor = '#e94560';
         let snakeBodyColor = '#0f3460';
-        
+        const WebSocket = require('ws');
+
         // WebSocket 连接
         function connectToServer(newRoomId) {
             roomId = newRoomId || 'default';
             // socket = new WebSocket(`wss://snake-game-l99p.onrender.com?room=${roomId}`);
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsHost = window.location.host;
-            socket = new WebSocket(`${wsProtocol}//${wsHost}?room=${roomId}`);
+            socket = WebSocket(`${wsProtocol}//${wsHost}?room=${roomId}`);
 
             socket.onerror = (error) => {
             console.error('WebSocket连接错误:', error);

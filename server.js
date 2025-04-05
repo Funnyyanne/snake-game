@@ -1,24 +1,33 @@
 const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
+var http = require('http').createServer(app);
 
 
 // 创建 Express 应用
 const app = express();
-app.set('trust proxy', true);
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
+// app.set('trust proxy', true);
+// app.use((req, res, next) => {
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+//     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//     next();
+// });
 app.use(express.static(path.join(__dirname, 'public')));
+
+
+// app.use('/static', express.static('static'))
+
 // 创建 HTTP 服务器
-const port = process.env.PORT || 8080;
-const server = app.listen(port, () => {
-    console.log(`Server running on http://0.0.0.0:${port}`);
+const server = app.listen(80, () => {
+    console.log(`Amazing snake-game Method™ server on 80`);
 });
-console.log(`Server running on ${process.env.NODE_ENV === 'production' ? 'wss' : 'ws'}://0.0.0.0:${port}`);
+
+http.listen(process.env.PORT || 3000, function() {
+    var host = http.address().address
+    var port = http.address().port
+    console.log('App listening at http://%s:%s', host, port)
+  });
 
 
 // 创建 WebSocket 服务器
