@@ -1,7 +1,6 @@
 const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
-var http = require('http').createServer(app);
 
 
 // 创建 Express 应用
@@ -22,6 +21,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const server = app.listen(80, () => {
     console.log(`Amazing snake-game Method™ server on 80`);
 });
+
+var http = require('http').createServer(app);
 
 http.listen(process.env.PORT || 3000, function() {
     var host = http.address().address
