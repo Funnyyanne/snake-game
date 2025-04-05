@@ -717,28 +717,43 @@
             canvas.width = 800;
             canvas.height = 600;
 
-             gameRunning = true;
-    gamePaused = false;
+            gameRunning = true;
+            gamePaused = false;
             snake = [];
             for (let i = 3; i >= 0; i--) {
                 snake.push({ x: i, y: 0 });
             }
-            
+            console.log('Snake initialized:', snake);
+
             spawnFood();
             spawnPowerUp();
+            
+            if (!isMultiplayer) {
+                foods = [];
+                powerUps = [];
+                spawnFood();
+                spawnPowerUp();
+                console.log('Single player mode - Foods:', foods, 'PowerUps:', powerUps);
+            } else {
+                foods = [];
+                powerUps = [];
+                console.log('Multiplayer mode - Waiting for server data');
+            }
             
             direction = 'right';
             nextDirection = 'right';
             score = 0;
             updateScore();
             
-            // 应用选择的皮肤
-            applySelectedSkin();
+            
 
             // 如果是多人游戏，发送初始位置
             if (isMultiplayer) {
                 sendPlayerData();
             }
+            // 应用选择的皮肤
+            applySelectedSkin();
+            drawGame();
         }
         
         // 应用选择的皮肤

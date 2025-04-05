@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 创建 HTTP 服务器
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
-    console.log('Server running on http://0.0.0.0:${port}');
+    console.log(`Server running on http://0.0.0.0:${port}`);
 });
 console.log(`Server running on ${process.env.NODE_ENV === 'production' ? 'wss' : 'ws'}://0.0.0.0:${port}`);
 
@@ -41,6 +41,7 @@ wss.on('connection', (ws, req) => {
             powerUps: []
         };
         spawnFood(roomId); // 立即生成食物
+        spawnPowerUp(roomId); // 立即生成道具
     }
 
     const playerId = 'player-' + Math.random().toString(36).substr(2, 9);
@@ -99,6 +100,7 @@ function spawnFood(roomId) {
         hasAd: Math.random() < 0.5
     };
     rooms[roomId].foods.push(newFood);
+    console.log(`Spawned food in room ${roomId}:`, newFood);
     broadcast(roomId, { type: 'foods', data: rooms[roomId].foods });
 }
 
@@ -114,6 +116,7 @@ function spawnPowerUp(roomId) {
     } else {
         rooms[roomId].powerUps = [];
     }
+    console.log(`Spawned powerUp in room ${roomId}:`, rooms[roomId].powerUps);
     broadcast(roomId, { type: 'powerUps', data: rooms[roomId].powerUps });
 }
 
