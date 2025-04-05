@@ -1,16 +1,16 @@
-services:
-  # web
-  - type: web
-    name: snake-game-l99p
-    env: docker
-    dockerfilePath: ./Dockerfile
-    region: oregon
-    plan: free
-    numInstances: 1
-    envVars:
-      - key: PORT
-        value: 8080
-    healthCheckPath: /
+# services:
+#   # web
+#   - type: web
+#     name: snake-game-l99p
+#     env: docker
+#     dockerfilePath: ./Dockerfile
+#     region: oregon
+#     plan: free
+#     numInstances: 1
+#     envVars:
+#       - key: PORT
+#         value: 8080
+#     healthCheckPath: /
 
   # backed
   - type: web
