@@ -634,7 +634,7 @@
         const MAX_PLAYERS = 50; // 最大支持50名玩家
         let snake = [];
         let foods = [];
-        let powerUps = [];
+        let powerUps = null;
         let direction = 'right';
         let nextDirection = 'right';
         let gameRunning = false;
@@ -659,14 +659,15 @@
         // WebSocket 连接
         function connectToServer(newRoomId) {
             roomId = newRoomId;
-            socket = new WebSocket(`wss://snake-game-ws.onrender.com?room=${roomId}`);            socket.onopen = () => {
+            socket = new WebSocket(`wss://game-server.onrender.com?room=${roomId}`);
+
+            socket.onopen = () => {
                 addChatMessage('系统', `已连接到房间 ${roomId}`);
                 sendPlayerData();
             };
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                console.log('Received message:', data); // debug
                 if (data.type === 'init') {
                     playerId = data.playerId;
                     roomId = data.roomId;
@@ -683,7 +684,6 @@
                     addChatMessage(data.sender, data.message);
                 } else if (data.type === 'foods') {
                     foods = data.data;
-                    console.log('Updated foods:', foods); // 调试更新后的食物
                 } else if (data.type === 'powerUps') {
                     powerUps = data.data;
                 }
@@ -704,12 +704,17 @@
 
         // 初始化游戏
         function initGame() {
+            // 设置 canvas 尺寸
+            canvas.width = 800;
+            canvas.height = 600;
+
+             gameRunning = true;
+    gamePaused = false;
             snake = [];
             for (let i = 3; i >= 0; i--) {
                 snake.push({ x: i, y: 0 });
             }
-            foods = [];
-            powerUps = [];
+            
             spawnFood();
             spawnPowerUp();
             
@@ -756,18 +761,24 @@
         
         // 生成食物
         function spawnFood() {
+            // foods = {
+            //     x: Math.floor(Math.random() * tileCount),
+            //     y: Math.floor(Math.random() * tileCount),
+            //     hasAd: Math.random() < 0.5 // 50% 概率生成广告
+            // };
+            
+            // // 确保食物不会生成在蛇身上
+            // for (let segment of snake) {
+            //     if (segment.x === foods.x && segment.y === foods.y) {
+            //         return spawnFood();
+            //     }
+            // }
             const newFood = {
                 x: Math.floor(Math.random() * tileCount),
                 y: Math.floor(Math.random() * tileCount),
                 hasAd: Math.random() < 0.5
             };
-            // 确保食物不会生成在蛇身上
-            for (let segment of snake) {
-                if (segment.x === newFood.x && segment.y === newFood.y) {
-                    return spawnFood();
-                }
-            }
-            foods = [newFood]; // 保持单个食物
+            foods.push(newFood);
         }
         
         // 本地生成道具（单人模式）
@@ -786,13 +797,6 @@
                         return spawnPowerUp();
                     }
                 }
-                for (let food of foods) {
-                    if (food.x === newPowerUp.x && food.y === newPowerUp.y) {
-                        return spawnPowerUp();
-                    }
-                }
-                
-                powerUps = [newPowerUp];
             } else {
                 powerUps = [];
             }
@@ -949,11 +953,6 @@
         
         // 绘制游戏
         function drawGame() {
-            console.log('Drawing game:', {
-                snake: snake,
-                foods: foods,
-                powerUps: powerUps
-            });
             // 清空画布
             ctx.fillStyle = '#16213e';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1032,7 +1031,6 @@
             }
             
             // 绘制食物
-            console.log('Drawing foods:', foods); // 调试食物数组
             for (let food of foods) {
                 ctx.fillStyle = '#f9b208';
                 ctx.beginPath();
@@ -1221,26 +1219,24 @@
             }
         }
 
+        function connectToServer() {
+        socket = new WebSocket('wss://snake-game-ws.onrender.com?room=${roomId}');
+        
+        socket.onopen = () => {
+            addChatMessage('系统', '已连接到多人游戏服务器');
+            sendPlayerData(); // 发送初始数据
+        };
+
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'init') {
                 playerId = data.playerId;
-                roomId = data.roomId;
-                players = data.data.players;
-                foods = data.data.foods;
-                powerUps = data.data.powerUps;
-                updatePlayerList();
-                drawGame();
             } else if (data.type === 'players') {
                 players = data.data;
                 updatePlayerList();
                 drawGame();
             } else if (data.type === 'chat') {
                 addChatMessage(data.sender, data.message);
-            } else if (data.type === 'foods') {
-                foods = data.data;
-            } else if (data.type === 'powerUps') {
-                powerUps = data.data;
             }
         };
 
@@ -1255,13 +1251,12 @@
         document.getElementById('multiplayer-btn').addEventListener('click', function() {
     isMultiplayer = !isMultiplayer;
     if (isMultiplayer) {
-        this.innerHTML = '<i class="fas fa-user mr-2"></i>single';
+        this.innerHTML = '<i class="fas fa-user mr-2"></i>单人模式';
         this.classList.remove('bg-blue-600');
         this.classList.add('bg-purple-600');
-        let newRoomId = prompt('Enter room number (leave blank for default room)') || 'default';
-        connectToServer(newRoomId);
+        connectToServer();
     } else {
-        this.innerHTML = '<i class="fas fa-users mr-2"></i>Multiplayer';
+        this.innerHTML = '<i class="fas fa-users mr-2"></i>多人模式';
         this.classList.remove('bg-purple-600');
         this.classList.add('bg-blue-600');
         if (socket) socket.close();
@@ -1269,7 +1264,7 @@
         updatePlayerList();
     }
 });
-    
+    }
         
         // 更新本地排行榜数据
         function updateLocalLeaderboard(newScore) {

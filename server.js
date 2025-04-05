@@ -5,13 +5,21 @@ const path = require('path');
 
 // 创建 Express 应用
 const app = express();
+app.set('trust proxy', true);
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
-
+console.log(`Server running on ${process.env.NODE_ENV === 'production' ? 'wss' : 'ws'}://0.0.0.0:${port}`);
 // 创建 HTTP 服务器
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
     console.log('Server running on http://0.0.0.0:${port}');
 });
+
 
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ server });
