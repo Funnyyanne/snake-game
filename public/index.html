@@ -1227,7 +1227,8 @@
             }
         }
 
-        function connectToServer() {
+        function connectToServer(newRoomId) {
+        roomId = newRoomId || 'default';
         socket = new WebSocket(`wss://snake-game-ws.onrender.com?room=${roomId}`);
         
         socket.onopen = () => {
