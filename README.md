@@ -54,6 +54,8 @@ A modern multiplayer snake game built with HTML5 Canvas, WebSocket, and Tailwind
 - Real-time: WebSocket
 - Deployment: Docker & Github Action & Render（free instance will spin down with inactivity, which can delay requests by 50 seconds or more.）
 
+### Feature Preview
+![Snake Game Preview](https://raw.githubusercontent.com/Funnyyanne/images/refs/heads/main/%E4%BC%98%E5%8C%96snake_game.gif)
 ---
 
 ## Chinese
@@ -119,3 +121,5 @@ npm run dev
 
 # 构建生产版本
 npm run build
+### Feature Preview
+![Snake Game Preview](https://raw.githubusercontent.com/Funnyyanne/images/refs/heads/main/%E4%BC%98%E5%8C%96snake_game.gif)
